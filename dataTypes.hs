@@ -1,6 +1,6 @@
-data Spot = Player Symbol | Empty deriving (Show, Eq) -- maybe ord?
-data Board = Incomplete [Spot] | Complete Spot deriving (Show, Eq)
-data Symbol = X | O deriving (Show, Eq)
+-- data Spot = Player Symbol | Empty deriving (Show, Eq) -- maybe ord?
+-- data Board = Incomplete [Spot] | Complete Spot deriving (Show, Eq)
+-- data Symbol = X | O deriving (Show, Eq)
 
 type Location = Int
 allLocations = [0..8]
