@@ -9,7 +9,7 @@ data SubBoard = Incomplete [Spot] | Complete Winner deriving (Show, Eq)
 type Board = [SubBoard]
 data Player = X | O deriving (Show, Eq)
 data Winner = Won Player | Tie | Unfinished deriving (Show, Eq)
-data GameState = Continuing Board Player | Finished Winner deriving (Show, Eq)
+type GameState = (Board, Player, Maybe Location)
 type Move = (Location, Location)
 
 
