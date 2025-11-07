@@ -2,14 +2,15 @@
 -- data Board = Incomplete [Spot] | Complete Spot deriving (Show, Eq)
 -- data Symbol = X | O deriving (Show, Eq)
 
-type Location = Int
+type Location = Int 
 allLocations = [0..8]
-data Spot = Full Player | Emp
-data SubBoard = Incomplete [Spot] | Complete Winner
+data Spot = Full Player | Emp deriving (Show, Eq)
+data SubBoard = Incomplete [Spot] | Complete Winner deriving (Show, Eq)
 type Board = [SubBoard]
-data Player = X | O
-
-type Move = (Location, Location, Spot)
+data Player = X | O deriving (Show, Eq)
+data Winner = Won Player | Tie | Unfinished deriving (Show, Eq)
+data GameState = Continuing Board Player | Finished Winner deriving (Show, Eq)
+type Move = (Location, Location)
 
 
 nextPlayer :: player -> player
