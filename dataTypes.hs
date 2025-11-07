@@ -1,6 +1,8 @@
 -- data Spot = Player Symbol | Empty deriving (Show, Eq) -- maybe ord?
 -- data Board = Incomplete [Spot] | Complete Spot deriving (Show, Eq)
 -- data Symbol = X | O deriving (Show, Eq)
+import Data.List (intercalate)
+import Data.List.Split (chunksOf)
 
 type Location = Int 
 allLocations = [0..8]
@@ -13,19 +15,40 @@ type GameState = (Board, Player, Maybe Location)
 type Move = (Location, Location)
 
 
-nextPlayer :: player -> player
-nextPlayer X = O
-nextPlayer O = X
+-- nextPlayer :: player -> player
+-- nextPlayer X = O
+-- nextPlayer O = X
 
 
-gameWinner :: Board -> Player
+-- gameWinner :: Board -> Player
 --Checks the Board, returns Empty if game is a draw, Cont if Game is still continuing, X or O for if respective player won
 nextPlayer :: Player -> Player
 nextPlayer X = O
 nextPlayer O = X
 
-prettyPrint :: Game -> String
+-- prettyPrint :: GameState -> String
+    
 
+printSubBoard :: SubBoard -> String
+printSubBoard (Complete w) = 
+    "           \n" ++
+    "     " ++ winState ++ "     \n" ++
+    "           \n"
+  where
+    winState = case w of
+        Won X       -> "X"
+        Won O       -> "O"
+        Tie         -> "T"
+        Unfinished  -> " "
+        
+printSubBoard (Incomplete lst) =
+    let rows = chunksOf 3 (map showSpot lst)
+    in unlines [intercalate "|" r | r <- rows]
+
+showSpot :: Spot -> String
+showSpot (Full X) = " X "
+showSpot (Full O) = " O "
+showSpot Emp      = "   "
 
 -- obviously this is just some of my code, you guys feel free to choose what you want from our doc
 -- i just put mine in as a placeholder
