@@ -4,11 +4,11 @@
 
 type Location = Int
 allLocations = [0..8]
-Data Spot = X | O | Emp | Cont
-type BoardSquare = (Location, Spot)
-Data SubBoard = Incomplete [BoardSquare] | Complete Location Spot
+data Spot = Full Player | Emp
+data SubBoard = Incomplete [Spot] | Complete Winner
 type Board = [SubBoard]
-type Player = Spot
+data Player = X | O
+
 type Move = (Location, Location, Spot)
 
 
