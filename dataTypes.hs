@@ -2,6 +2,16 @@ data Spot = Player Symbol | Empty deriving (Show, Eq) -- maybe ord?
 data Board = Incomplete [Spot] | Complete Spot deriving (Show, Eq)
 data Symbol = X | O deriving (Show, Eq)
 
+type Location = Int
+allLocations = [0..8]
+Data Spot = X | O | Emp | Cont
+type BoardSquare = (Location, Spot)
+Data SubBoard = Incomplete [BoardSquare] | Complete Location Spot
+type Board = [SubBoard]
+type Player = Spot
+type Move = (Location, Location, Spot)
+
+
 nextPlayer :: player -> player
 nextPlayer X = O
 nextPlayer O = X
