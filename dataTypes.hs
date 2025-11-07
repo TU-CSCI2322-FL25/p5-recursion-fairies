@@ -24,5 +24,8 @@ nextPlayer :: Player -> Player
 nextPlayer X = O
 nextPlayer O = X
 
+prettyPrint :: Game -> String
+
+
 -- obviously this is just some of my code, you guys feel free to choose what you want from our doc
 -- i just put mine in as a placeholder
