@@ -21,7 +21,6 @@ type Move = (Location, Location)
 
 
 -- gameWinner :: Board -> Player
---Checks the Board, returns Empty if game is a draw, Cont if Game is still continuing, X or O for if respective player won
 nextPlayer :: Player -> Player
 nextPlayer X = O
 nextPlayer O = X
