@@ -19,7 +19,7 @@ nextPlayer O = X
 
 
 gameWinner :: Board -> Winner
-gameWinner brd = let temp = (boardToSubBoard brd)
+gameWinner brd = let temp = Incomplete (boardToSubBoard brd)
                  in subBoardWinner temp
                      
 
@@ -39,7 +39,7 @@ subBoardWinner Incomplete spots =
                 osFull = catMaybes $ map isPlayerO locs
                 xWins = checkWinner xsFull
                 oWins = checkWinner osFull
-                boardFull = length xsFull + length osFull == 9
+                boardFull = ((length xsFull) + (length osFull)) == 9
             in if xWins 
             then Won X
             else if oWins 
@@ -50,12 +50,15 @@ subBoardWinner Incomplete spots =
 
 checkVertical :: Location -> [Location] -> Bool
 checkVertical a xs = (a `elem` xs) && ((a+3) `elem` xs) && $ (a+6) `elem` xs 
+
 checkHorizontal :: Location -> [Location] -> Bool
 checkHorizontal a xs = (a `elem` xs) && ((a+1) `elem` xs) && $ (a+2) `elem xs
+
 checkDiagonalLeft :: [Location] -> Bool
-checkDiagonalLeft xs = (0 `elem` xs) && (4 `elem` xs) && (8 `elem` xs)
+checkDiagonalLeft xs = (0 `elem` xs) && (4 `elem` xs) && $ 8 `elem` xs
+
 checkDiagonalRight :: [Location] -> Bool
-checkDiagonalRight xs = (2 `elem` xs) && (4 `elem` xs) && (6 `elem` xs)
+checkDiagonalRight xs = (2 `elem` xs) && (4 `elem` xs) && $ 6 `elem` xs
 
 checkWinner [Location] -> Bool
 checkWinner xs = let b1 = checkVertical 0 xs   || checkVertical 1 xs   || checkVertical 2 xs
@@ -66,8 +69,8 @@ checkWinner xs = let b1 = checkVertical 0 xs   || checkVertical 1 xs   || checkV
 
 boardToSubBoard :: Board -> [Spot]
 boardToSubBoard [] = []
-boardToSubBoard (Complete Player a:xs) =(Full a):(aux xs)
-boardToSubBoard (x:xs) = Emp:xs
+boardToSubBoard (Complete Player a:xs) =(Full a):(boardToSubBoard xs)
+boardToSubBoard (x:xs) = Emp:(boardToSubBoard xs)
 
 -- obviously this is just some of my code, you guys feel free to choose what you want from our doc
 -- i just put mine in as a placeholder
