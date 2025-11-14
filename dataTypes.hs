@@ -86,11 +86,11 @@ showSpot Emp      = "   "
 
 -- GAME FUNCS
 checkWinner [Location] -> Bool
-checkWinner xs = let
-  b1 = checkVertical 0 xs   || checkVertical 1 xs   || checkVertical 2 xs
-  b2 = checkHorizontal 0 xs || checkHorizontal 3 xs || checkHorizontal 6 xs
-  b3 = checkDiagonalLeft xs || checkDiagonalRight xs
-  in b1 || b2 || b3
+checkWinner xs = 
+    let b1 = checkVertical 0 xs   || checkVertical 1 xs   || checkVertical 2 xs
+        b2 = checkHorizontal 0 xs || checkHorizontal 3 xs || checkHorizontal 6 xs
+        b3 = checkDiagonalLeft xs || checkDiagonalRight xs
+    in b1 || b2 || b3
 
 checkVertical :: Location -> [Location] -> Bool
 checkVertical a xs = (a `elem` xs) && ((a+3) `elem` xs) && $ (a+6) `elem` xs 
@@ -125,8 +125,8 @@ gameWinner brd = let temp = (boardToSubBoard brd)
 
 boardToSubBoard :: Board -> [Spot]
 boardToSubBoard [] = []
-boardToSubBoard (Complete Player a:xs) =(Full a):(aux xs)
-boardToSubBoard (x:xs) = Emp:xs
+boardToSubBoard (Complete Player a:xs) =(Full a):(boardToSubBoard xs)
+boardToSubBoard (x:xs) = Emp:(boardToSubBoard xs)
 
 checkLegalMoves :: Board -> [Move]
 checkLegalMoves game = let -- auxMain is a recursive function that goes through a board and calls auxSub on all incomplete boards (boards with legal moves).
