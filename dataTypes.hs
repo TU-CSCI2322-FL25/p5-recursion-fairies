@@ -31,9 +31,9 @@ nextPlayer O = X
 
 -- PRINTING BOARD FUNCS
 -- tester board
--- subBoard1 = Incomplete [Full X, Full O, Emp, Full X, Full O, Emp, Full O, Full X, Emp]
--- subBoard2 = Complete $ Won X
--- board = [subBoard1, subBoard1, subBoard 2, subBoard1, subBoard 1, subBoard 2, subBoard 2, subBoard 2, subBoard 1]
+--subBoard1 = Incomplete [Full X, Full O, Emp, Full X, Full O, Emp, Full O, Full X, Emp]
+--subBoard2 = Complete $ Won X
+--board = [subBoard1, subBoard1, subBoard2, subBoard1, subBoard1, subBoard2, subBoard2, subBoard2, subBoard1]
 subBoardStr :: SubBoard -> (String, String, String)
 subBoardStr (Complete w) = 
     ("           ", 
@@ -108,8 +108,8 @@ checkAllFull _ = False
 
 
 subBoardWinner:: SubBoard -> Winner
-subBoardWinner Complete a = a
-subBoardWinner Incomplete spots = 
+subBoardWinner (Complete a) = a
+subBoardWinner (Incomplete spots) = 
             let locs = zip allLocations spots
                 xsFull = catMaybes $ map isPlayerX locs
                 osFull = catMaybes $ map isPlayerO locs
@@ -126,7 +126,7 @@ subBoardWinner Incomplete spots =
 gameWinner :: Board -> Winner
 gameWinner brd = let temp = (boardToSubBoard brd)
                      fullStatus = (checkAllFull brd)
-                     won = subBoardWinner temp
+                     won = subBoardWinner (Incomplete temp)
                  in if won == Unfinished
                     then if fullStatus
                          then Tie
