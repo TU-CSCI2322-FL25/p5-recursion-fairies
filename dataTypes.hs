@@ -3,7 +3,7 @@
 -- data Symbol = X | O deriving (Show, Eq)
 import Data.List (intercalate)
 import Data.List.Split (chunksOf)
-
+import Data.Maybe
 -- DEFINE ALL DATA TYPES
 allLocations = [0..8]
 type Location = Int
@@ -85,7 +85,7 @@ showSpot (Full O) = " O "
 showSpot Emp      = "   "
 
 -- GAME FUNCS
-checkWinner [Location] -> Bool
+checkWinner :: [Location] -> Bool
 checkWinner xs = 
     let b1 = checkVertical 0 xs   || checkVertical 1 xs   || checkVertical 2 xs
         b2 = checkHorizontal 0 xs || checkHorizontal 3 xs || checkHorizontal 6 xs
@@ -93,13 +93,18 @@ checkWinner xs =
     in b1 || b2 || b3
 
 checkVertical :: Location -> [Location] -> Bool
-checkVertical a xs = (a `elem` xs) && ((a+3) `elem` xs) && $ (a+6) `elem` xs 
+checkVertical a xs = (a `elem` xs) && ((a+3) `elem` xs) && ((a+6) `elem` xs )
 checkHorizontal :: Location -> [Location] -> Bool
-checkHorizontal a xs = (a `elem` xs) && ((a+1) `elem` xs) && $ (a+2) `elem xs
+checkHorizontal a xs = (a `elem` xs) && ((a+1) `elem` xs) && ((a+2) `elem` xs)
 checkDiagonalLeft :: [Location] -> Bool
 checkDiagonalLeft xs = (0 `elem` xs) && (4 `elem` xs) && (8 `elem` xs)
 checkDiagonalRight :: [Location] -> Bool
 checkDiagonalRight xs = (2 `elem` xs) && (4 `elem` xs) && (6 `elem` xs)
+
+checkAllFull :: Board -> Bool
+checkAllFull [] = True
+checkAllFull ((Complete a):xs) = True && (checkAllFull xs)
+checkAllFull _ = False
 
 
 subBoardWinner:: SubBoard -> Winner
@@ -120,12 +125,18 @@ subBoardWinner Incomplete spots =
                       else Unfinished
 gameWinner :: Board -> Winner
 gameWinner brd = let temp = (boardToSubBoard brd)
-                 in subBoardWinner temp
+                     fullStatus = (checkAllFull brd)
+                     won = subBoardWinner temp
+                 in if won == Unfinished
+                    then if fullStatus
+                         then Tie
+                         else Unfinished
+                    else won
 
 
 boardToSubBoard :: Board -> [Spot]
 boardToSubBoard [] = []
-boardToSubBoard (Complete Player a:xs) =(Full a):(boardToSubBoard xs)
+boardToSubBoard ((Complete (Won a)):xs) =(Full a):(boardToSubBoard xs)
 boardToSubBoard (x:xs) = Emp:(boardToSubBoard xs)
 
 checkLegalMoves :: Board -> [Move]
@@ -185,6 +196,8 @@ checkOverall board =
   where
     subToWinner (Complete w) = w
     subToWinner _            = Unfinished
+
+                
 
 -- Core function: make a legal move
 makeMove :: GameState -> Move -> GameState
