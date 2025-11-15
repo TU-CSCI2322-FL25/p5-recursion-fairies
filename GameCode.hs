@@ -2,88 +2,13 @@ module GameCode where
 -- data Spot = Player Symbol | Empty deriving (Show, Eq) -- maybe ord?
 -- data Board = Incomplete [Spot] | Complete Spot deriving (Show, Eq)
 -- data Symbol = X | O deriving (Show, Eq)
-import Data.List (intercalate)
-import Data.List.Split (chunksOf)
+
 import Data.Maybe
--- DEFINE ALL DATA TYPES
-allLocations = [0..8]
-type Location = Int
 
-data Player = X | O deriving (Show, Eq)
-data Spot = Full Player | Emp deriving (Show, Eq)
-data Winner = Won Player | Tie | Unfinished deriving (Show, Eq)
-data SubBoard = Incomplete [Spot] | Complete Winner deriving (Show, Eq)
-type Board = [SubBoard]
-
-type Move = (Location, Location)
-type GameState = (Board, Player, Maybe Location)
-
--- DEFINE FUNCTIONS FOR DATA TYPES
-isPlayerX :: (Location, Spot) -> Maybe Location
-isPlayerX (i, Full X) = Just i
-isPlayerX _ = Nothing
-isPlayerO :: (Location, Spot) -> Maybe Location
-isPlayerO (i, Full O) = Just i
-isPlayerO _ = Nothing
-
-nextPlayer :: Player -> Player
-nextPlayer X = O
-nextPlayer O = X
-
--- PRINTING BOARD FUNCS
--- tester board
---subBoard1 = Incomplete [Full X, Full O, Emp, Full X, Full O, Emp, Full O, Full X, Emp]
---subBoard2 = Complete $ Won X
---board = [subBoard1, subBoard1, subBoard2, subBoard1, subBoard1, subBoard2, subBoard2, subBoard2, subBoard1]
-subBoardStr :: SubBoard -> (String, String, String)
-subBoardStr (Complete w) = 
-    ("           ", 
-    "     " ++ winState ++ "     ",
-    "           ")
-  where
-    winState = case w of
-        Won X       -> "X"
-        Won O       -> "O"
-        Tie         -> "T"
-        Unfinished  -> " "
-subBoardStr (Incomplete lst) =
-    let rows = chunksOf 3 (map showSpot lst)
-        rowStrs = map (intercalate "|") rows
-    in
-      case rowStrs of
-        [r1, r2, r3] -> (r1, r2, r3)
-
-printMainBoard :: Board -> String
-printMainBoard board =
-  let subStrs = map subBoardStr board
-      mainRows = chunksOf 3 subStrs
-      totalRow row =
-        let (r1s, r2s, r3s) = unzip3 row
-        in unlines [intercalate "||" r1s, intercalate "||" r2s, intercalate "||" r3s]
-  in intercalate "=====================================" $ map totalRow mainRows
-
-
-
-printSubBoard :: SubBoard -> String
-printSubBoard (Complete w) = 
-    "           \n" ++
-    "     " ++ winState ++ "     \n" ++
-    "           \n"
-  where
-    winState = case w of
-        Won X       -> "X"
-        Won O       -> "O"
-        Tie         -> "T"
-        Unfinished  -> " "
-        
-printSubBoard (Incomplete lst) =
-    let rows = chunksOf 3 (map showSpot lst)
-    in unlines [intercalate "|" r | r <- rows]
-
-showSpot :: Spot -> String
-showSpot (Full X) = " X "
-showSpot (Full O) = " O "
-showSpot Emp      = "   "
+--import all other files that are needed
+import DataTypes
+import GamePrint
+import InputText
 
 -- GAME FUNCS
 checkWinner :: [Location] -> Bool
@@ -104,7 +29,7 @@ checkDiagonalRight xs = (2 `elem` xs) && (4 `elem` xs) && (6 `elem` xs)
 
 checkAllFull :: Board -> Bool
 checkAllFull [] = True
-checkAllFull ((Complete a):xs) = True && (checkAllFull xs)
+checkAllFull ((Complete a):xs) = checkAllFull xs
 checkAllFull _ = False
 
 
