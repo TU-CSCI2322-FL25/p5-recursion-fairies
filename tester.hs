@@ -1,5 +1,6 @@
 module Tests where
 
+import DataTypes
 import GameCode
 
 ------------------------------------------------------------
