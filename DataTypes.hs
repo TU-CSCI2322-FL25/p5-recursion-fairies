@@ -1,7 +1,8 @@
 module DataTypes where
     
-    allLocations = [0..8]
+    
     type Location = Int
+    allLocations = [0..8] :: [Location]
 
     data Player = X | O deriving (Show, Eq)
     data Spot = Full Player | Emp deriving (Show, Eq)
