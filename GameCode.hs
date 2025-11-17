@@ -33,26 +33,26 @@ checkAllFull ((Complete a):xs) = checkAllFull xs
 checkAllFull _ = False
 
 
-subBoardWinner:: SubBoard -> Winner
-subBoardWinner (Complete a) = a
-subBoardWinner (Incomplete spots) = 
-            let locs = zip allLocations spots
-                xsFull = catMaybes $ map isPlayerX locs
-                osFull = catMaybes $ map isPlayerO locs
-                xWins = checkWinner xsFull
-                oWins = checkWinner osFull
-                boardFull = length xsFull + length osFull == 9
-            in if xWins 
-            then Won X
-            else if oWins 
-                 then Won O 
-                 else if boardFull
-                      then Tie
-                      else Unfinished
+-- subBoardWinner:: SubBoard -> Winner
+-- subBoardWinner (Complete a) = a
+-- subBoardWinner (Incomplete spots) = 
+--             let locs = zip allLocations spots
+--                 xsFull = catMaybes $ map isPlayerX locs
+--                 osFull = catMaybes $ map isPlayerO locs
+--                 xWins = checkWinner xsFull
+--                 oWins = checkWinner osFull
+--                 boardFull = length xsFull + length osFull == 9
+--             in if xWins 
+--             then Won X
+--             else if oWins 
+--                  then Won O 
+--                  else if boardFull
+--                       then Tie
+--                       else Unfinished
 gameWinner :: Board -> Winner
 gameWinner brd = let temp = (boardToSubBoard brd)
                      fullStatus = (checkAllFull brd)
-                     won = subBoardWinner (Incomplete temp)
+                     won = checkSubBoard (temp)
                  in if won == Unfinished
                     then if fullStatus
                          then Tie
@@ -107,21 +107,21 @@ updateBoard :: Board -> Location -> SubBoard -> Board
 updateBoard board idx newSub = take idx board ++ [newSub] ++ drop (idx + 1) board
 
 
--- Check overall game winner 
-checkOverall :: Board -> Winner
-checkOverall board =
-  let subResults = map subToWinner board
-      owned p i  = subResults !! i == Won p
-      lines = [[0,1,2],[3,4,5],[6,7,8],
-               [0,3,6],[1,4,7],[2,5,8],
-               [0,4,8],[2,4,6]]
-  in if any (all (owned X)) lines then Won X
-     else if any (all (owned O)) lines then Won O
-     else if all (\w -> w /= Unfinished) subResults then Tie
-     else Unfinished
-  where
-    subToWinner (Complete w) = w
-    subToWinner _            = Unfinished
+-- -- Check overall game winner 
+-- checkOverall :: Board -> Winner
+-- checkOverall board =
+--   let subResults = map subToWinner board
+--       owned p i  = subResults !! i == Won p
+--       lines = [[0,1,2],[3,4,5],[6,7,8],
+--                [0,3,6],[1,4,7],[2,5,8],
+--                [0,4,8],[2,4,6]]
+--   in if any (all (owned X)) lines then Won X
+--      else if any (all (owned O)) lines then Won O
+--      else if all (\w -> w /= Unfinished) subResults then Tie
+--      else Unfinished
+--   where
+--     subToWinner (Complete w) = w
+--     subToWinner _            = Unfinished
 
                 
 
@@ -139,7 +139,7 @@ makeMove (board, player, _) (subLoc, cellLoc)
   | Incomplete spots <- board !! subLoc, Emp <- spots !! cellLoc =
       let newSub   = placeSpot player (Incomplete spots) cellLoc
           newBoard = updateBoard board subLoc newSub
-          overall  = checkOverall newBoard
+          overall  = gameWinner newBoard
 
           nextForced = -- You must go to the sub-board indicated by the cell you just played.
             case newBoard !! cellLoc of
