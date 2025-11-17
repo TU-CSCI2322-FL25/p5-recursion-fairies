@@ -95,25 +95,3 @@ makeMove (board, player, _) (subLoc, cellLoc)
       in case overall of
            Unfinished -> (newBoard, nextPlayer player, nextForced)
            w          -> (newBoard, player, Nothing)
-
-
-whoWillWin :: GameState -> Winner
-whoWillWin (board, player, forced)
-  | winner /= Unfinished = winner
-  | otherwise       = bestOutcome player
-[whoWillWin (makeMove (board, player, forced) move) | move <- moves]
-  where
-    winner = gameWinner board
-    moves = case forced of
-              Nothing -> checkLegalMoves board
-              Just f  -> filter (\(b, _) -> b == f) (checkLegalMoves board)
-              
-bestOutcome :: Player -> [Winner] -> Winner
-bestOutcome X outcomes
-  | Won X `elem` outcomes = Won X
-  | Tie  `elem` outcomes  = Tie
-  | otherwise             = Won O
-bestOutcome O outcomes
-  | Won O `elem` outcomes = Won O
-  | Tie  `elem` outcomes  = Tie
-  | otherwise             = Won X
