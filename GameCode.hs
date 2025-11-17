@@ -99,11 +99,11 @@ makeMove (board, player, _) (subLoc, cellLoc)
 
 whoWillWin :: GameState -> Winner
 whoWillWin (board, player, forced)
-  | w /= Unfinished = w
-  | otherwise       = chooseBest player
-      [whoWillWin (makeMove (board, player, forced) move) | move <- moves]
+  | winner /= Unfinished = winner
+  | otherwise       = bestOutcome player
+[whoWillWin (makeMove (board, player, forced) move) | move <- moves]
   where
-    w     = gameWinner board
+    winner = gameWinner board
     moves = case forced of
               Nothing -> checkLegalMoves board
               Just f  -> filter (\(b, _) -> b == f) (checkLegalMoves board)
