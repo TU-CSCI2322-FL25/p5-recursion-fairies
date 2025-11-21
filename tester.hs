@@ -143,7 +143,7 @@ test_gameWin = do
     assert "GameWin: board unchanged" bw b
     assert "GameWin: player unchanged" O p
     assert "GameWin: forced unchanged" Nothing f
-    assert "GameWin: winner" (Won X) (gameWinner b)
+    assert "GameWin: winner" (Just $ Won X) (gameWinner b)
 
 ------------------------------------------------------------
 -- TEST 8: Full tie board
@@ -152,7 +152,7 @@ test_gameWin = do
 test_tieBoard :: IO ()
 test_tieBoard = do
     let tb = replicate 9 (Complete Tie)
-    assert "TieBoardWinner" Tie (gameWinner tb)
+    assert "TieBoardWinner" (Just Tie) (gameWinner tb)
 
 ------------------------------------------------------------
 -- TEST 9: Legal move enumeration
