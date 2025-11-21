@@ -10,16 +10,29 @@ import DataTypes
 import GameText
 
 -- GAME FUNCS
-checkLegalMoves :: Board -> [Move]
-checkLegalMoves game = let -- auxMain is a recursive function that goes through a board and calls auxSub on all incomplete boards (boards with legal moves).
-  auxMain _ [] = []
-  auxMain boardLoc ((Incomplete sub):xs) = auxSub boardLoc 0 sub ++ auxMain (boardLoc + 1) xs
-  auxMain boardLoc ((Complete _):xs) = auxMain (boardLoc + 1) xs
-  -- auxSub is a recursive function that goes through a subboard and finds all the legal moves in the board, returning legal moves as a Move.
-  auxSub _ _ [] = []
-  auxSub boardLoc subBoardLoc (Emp:xs) = (boardLoc, subBoardLoc):auxSub boardLoc (subBoardLoc + 1) xs
-  auxSub boardLoc subBoardLoc ((Full _):xs) = auxSub boardLoc (subBoardLoc + 1) xs
-  in auxMain 0 game
+checkLegalMoves :: GameState -> [Move]
+checkLegalMoves (board, player, Nothing) =
+  let
+    auxMain boardLoc [] = []
+    auxMain boardLoc ((Incomplete sub):xs) =
+        auxSub boardLoc 0 sub ++ auxMain (boardLoc + 1) xs
+    auxMain boardLoc ((Complete _):xs) =
+        auxMain (boardLoc + 1) xs
+
+    auxSub boardLoc subBoardLoc [] = []
+    auxSub boardLoc subBoardLoc (Emp:xs) =
+        (boardLoc, subBoardLoc):auxSub boardLoc (subBoardLoc + 1) xs
+    auxSub boardLoc subBoardLoc ((Full _):xs) =
+        auxSub boardLoc (subBoardLoc + 1) xs
+  in auxMain 0 board
+checkLegalMoves (board, player, Just forced) = case board !! forced of
+  Complete _ -> []
+  Incomplete sub ->
+    let
+      auxSub _ [] = []
+      auxSub subLoc (Emp:xs) = (forced, subLoc):auxSub (subLoc + 1) xs
+      auxSub subLoc ((Full _):xs) = auxSub (subLoc + 1) xs
+    in auxSub 0 sub
 
 -- Place a player's mark in a given spot of a sub-board
 placeSpot :: Player -> SubBoard -> Location -> SubBoard
@@ -92,6 +105,36 @@ makeMove (board, player, _) (subLoc, cellLoc)
       in case overall of
            Nothing -> (newBoard, nextPlayer player, nextForced)
            Just _ -> (newBoard, player, Nothing)
+
+-- whoWillWin :: GameState -> Winner
+-- whoWillWin state@(board, player, forced) = case gameWinner board of
+--   Nothing -> map whoWillWin madeMoves
+--   Just winner -> winner
+--   where
+--     legalMoves = checkLegalMoves state
+--     madeMoves = map (makeMove state) legalMoves
+whoWillWin :: GameState -> Winner
+whoWillWin start =
+  bfs [start]
+  where
+    bfs [] = error "No winner reachable"
+    bfs layer =
+      -- Check all states in this layer for a winner
+      case findWinner layer of
+        Just w  -> w
+        Nothing -> bfs (nextLayer layer)
+
+    findWinner [] = Nothing
+    findWinner ((board,_,_):rest) =
+      case gameWinner board of
+        Just w  -> Just w
+        Nothing -> findWinner rest
+
+    nextLayer layer =
+      concat [ [ makeMove state mv
+               | mv <- checkLegalMoves state ]
+             | state <- layer ]
+
 
 -- a solution, but wrong
 -- whoWillWin :: GameState -> Winner
