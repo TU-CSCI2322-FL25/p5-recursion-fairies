@@ -25,19 +25,16 @@ checkLegalMoves game = let -- auxMain is a recursive function that goes through 
 placeSpot :: Player -> SubBoard -> Location -> SubBoard
 placeSpot p (Incomplete spots) loc =
   let newSpots = take loc spots ++ [Full p] ++ drop (loc + 1) spots
-      winner   = checkSubBoard newSpots
-  in case winner of
-       Unfinished -> Incomplete newSpots
-       _          -> Complete winner
+  in checkSubBoard newSpots
 placeSpot _ board@(Complete _) _ = board  -- no change if already complete
 
 -- Check if a sub-board has a winner or tie
-checkSubBoard :: [Spot] -> Winner
+checkSubBoard :: [Spot] -> SubBoard
 checkSubBoard spots
-  | any (allOwnedBy X) lines = Won X
-  | any (allOwnedBy O) lines = Won O
-  | all isFull spots         = Tie
-  | otherwise                = Unfinished
+  | any (allOwnedBy X) lines = Complete $ Won X
+  | any (allOwnedBy O) lines = Complete $ Won O
+  | all isFull spots         = Complete Tie
+  | otherwise                = Incomplete spots
   where
     lines = [[0,1,2],[3,4,5],[6,7,8],
              [0,3,6],[1,4,7],[2,5,8],
@@ -53,27 +50,28 @@ updateBoard board idx newSub = take idx board ++ [newSub] ++ drop (idx + 1) boar
 
 
 -- Check overall game winner 
-gameWinner :: Board -> Winner
-gameWinner board =
-  let subResults = map subToWinner board
-      owned p i  = subResults !! i == Won p
-      lines = [[0,1,2],[3,4,5],[6,7,8],
-               [0,3,6],[1,4,7],[2,5,8],
-               [0,4,8],[2,4,6]]
-  in if any (all (owned X)) lines then Won X
-     else if any (all (owned O)) lines then Won O
-     else if all (\w -> w /= Unfinished) subResults then Tie
-     else Unfinished
+gameWinner :: Board -> Maybe Winner
+gameWinner board
+  | any (all (owned X)) lines = Just $ Won X
+  | any (all (owned O)) lines = Just $ Won O
+  | all isComplete board = Just Tie
+  | otherwise = Nothing
   where
-    subToWinner (Complete w) = w
-    subToWinner _            = Unfinished
+    owned p i  = case board !! i of
+      Complete (Won pl) -> p == pl
+      _ -> False
+    lines = [[0,1,2],[3,4,5],[6,7,8],
+             [0,3,6],[1,4,7],[2,5,8],
+             [0,4,8],[2,4,6]]
+    isComplete (Complete _) = True
+    isComplete (Incomplete _) = False
 
                 
 
 -- Core function: make a legal move
 makeMove :: GameState -> Move -> GameState
 makeMove (board, player, forced) (subLoc, cellLoc)
-  | gameWinner board /= Unfinished = (board, player, Nothing)
+  | isJust (gameWinner board) = (board, player, Nothing)
   | subLoc < 0 || subLoc > 8 = (board, player, forced) -- Out of bounds
   | cellLoc < 0 || cellLoc > 8 = (board, player, forced)
   | Just f <- forced, f /= subLoc = (board, player, forced) -- Forced board rule violated
@@ -92,8 +90,8 @@ makeMove (board, player, _) (subLoc, cellLoc)
               Complete _   -> Nothing
 
       in case overall of
-           Unfinished -> (newBoard, nextPlayer player, nextForced)
-           w          -> (newBoard, player, Nothing)
+           Nothing -> (newBoard, nextPlayer player, nextForced)
+           Just _ -> (newBoard, player, Nothing)
 
 -- a solution, but wrong
 -- whoWillWin :: GameState -> Winner

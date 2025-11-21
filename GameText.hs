@@ -6,27 +6,16 @@ import Data.List (intercalate)
 import Data.List.Split (chunksOf)
 import System.IO
 
--- PRINTING BOARD FUNCS
---subBoard1 = Incomplete [Full X, Full O, Emp, Full X, Full O, Emp, Full O, Full X, Emp]
---subBoard2 = Complete $ Won X
---board = [subBoard1, subBoard1, subBoard2, subBoard1, subBoard1, subBoard2, subBoard2, subBoard2, subBoard1]
+-- gamestate to printable format
 subBoardStr :: SubBoard -> (String, String, String)
 subBoardStr (Complete w) = 
     ("           ", 
-    "     " ++ winState ++ "     ",
+    "     " ++ show w ++ "     ",
     "           ")
-    where
-        winState = case w of
-            Won X       -> "X"
-            Won O       -> "O"
-            Tie         -> "T"
-            Unfinished  -> " "
 subBoardStr (Incomplete lst) =
     let rows = chunksOf 3 (map showSpot lst)
-        rowStrs = map (intercalate "|") rows
-    in
-    case rowStrs of
-        [r1, r2, r3] -> (r1, r2, r3)
+        rowStrs@[r1, r2, r3] = map (intercalate "|") rows
+    in (r1, r2, r3)
 
 printGame :: GameState -> String
 printGame (state, player, loc) = 
@@ -41,22 +30,27 @@ printMainBoard board =
             in unlines [intercalate "||" r1s, intercalate "||" r2s, intercalate "||" r3s]
     in intercalate "=====================================" $ map totalRow mainRows
 
-printSubBoard :: SubBoard -> String
-printSubBoard (Complete w) = 
-    "           \n" ++
-    "     " ++ winState ++ "     \n" ++
-    "           \n"
+-- gamestate to file format
+gameStateOut :: GameState -> String
+gameStateOut (board, player, cur) =
+    p ++ "\n" ++ c ++ "\n" ++ b
     where
-        winState = case w of
-            Won X       -> "X"
-            Won O       -> "O"
-            Tie         -> "T"
-            Unfinished  -> " "
-        
-printSubBoard (Incomplete lst) =
-    let rows = chunksOf 3 (map showSpot lst)
-    in unlines [intercalate "|" r | r <- rows]
+        p = show player
+        c = case cur of
+            Just n -> show n
+            Nothing -> ""
+        b = mainBoardOut board
 
+mainBoardOut :: Board -> String
+mainBoardOut board = let shownBoard = map subBoardOut board
+    in unlines shownBoard
+
+subBoardOut :: SubBoard -> String
+subBoardOut (Complete w) = show w
+subBoardOut (Incomplete lst) = let shownSpots = map show lst
+    in unwords shownSpots
+
+-- file to string code
 readGameState :: FilePath -> IO GameState
 readGameState path = do
     conts <- readFile path
@@ -82,5 +76,3 @@ parseSubBoard [winner] = Complete $ Won $ spotToPlayer $ parseSpot [winner]
 parseSubBoard ln =
     let pList = words ln
     in Incomplete $ map parseSpot pList
-
---I WILL DO: I will have it turn gamestate to String for textfile, then do textfile string to pretty print- i have been sick so one sec

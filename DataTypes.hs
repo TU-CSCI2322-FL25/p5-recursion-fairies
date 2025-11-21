@@ -4,8 +4,8 @@ type Location = Int
 allLocations = [0..8] :: [Location]
 
 data Player = X | O deriving (Show, Eq)
-data Spot = Full Player | Emp deriving (Show, Eq)
-data Winner = Won Player | Tie | Unfinished deriving (Show, Eq)
+data Spot = Full Player | Emp deriving (Eq)
+data Winner = Won Player | Tie deriving (Eq)
 data SubBoard = Incomplete [Spot] | Complete Winner deriving (Show, Eq)
 type Board = [SubBoard]
 
@@ -24,10 +24,13 @@ spotToPlayer :: Spot -> Player
 spotToPlayer (Full p) = p
 spotToPlayer Emp = error "Empty is not a player"
 
-playerString :: Player -> String
-playerString X = "X"
-playerString O = "O"
--- playerString p = error ("Invalid player: " ++ p)
+instance Show Spot where
+    show (Full player) = show player
+    show Emp = "E"
+
+instance Show Winner where
+    show (Won player) = show player
+    show Tie = "T"
 
 showSpot :: Spot -> String -- still deciding if i should choose one of these over the others
 showSpot (Full X) = " X "
