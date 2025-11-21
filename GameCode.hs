@@ -7,8 +7,7 @@ import Data.Maybe
 
 --import all other files that are needed
 import DataTypes
-import GamePrint
-import InputText
+import GameText
 
 -- GAME FUNCS
 checkLegalMoves :: Board -> [Move]
