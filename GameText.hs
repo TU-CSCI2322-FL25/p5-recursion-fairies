@@ -31,6 +31,9 @@ printMainBoard board =
     in intercalate "=====================================" $ map totalRow mainRows
 
 -- gamestate to file format
+writeGameState :: FilePath -> GameState -> IO ()
+writeGameState path state = writeFile path $ gameStateOut state
+
 gameStateOut :: GameState -> String
 gameStateOut (board, player, cur) =
     p ++ "\n" ++ c ++ "\n" ++ b
