@@ -106,48 +106,24 @@ makeMove (board, player, _) (subLoc, cellLoc)
            Nothing -> (newBoard, nextPlayer player, nextForced)
            Just _ -> (newBoard, player, Nothing)
 
--- whoWillWin :: GameState -> Winner
--- whoWillWin state@(board, player, forced) = case gameWinner board of
---   Nothing -> map whoWillWin madeMoves
---   Just winner -> winner
---   where
---     legalMoves = checkLegalMoves state
---     madeMoves = map (makeMove state) legalMoves
 whoWillWin :: GameState -> Winner
-whoWillWin start =
-  bfs [start]
+whoWillWin state =
+  bfs [state]
   where
-    bfs [] = error "No winner reachable"
-    bfs layer =
-      -- Check all states in this layer for a winner
-      case findWinner layer of
-        Just w  -> w
-        Nothing -> bfs (nextLayer layer)
+    legalMoves = checkLegalMoves state
 
+    bfs [] = error "No winner found"
+    bfs layer =
+      case findWinner layer of
+        Just w -> w
+        Nothing -> bfs (concat [map (makeMove s) legalMoves | s <- layer])
+      
     findWinner [] = Nothing
-    findWinner ((board,_,_):rest) =
+    findWinner ((board, _, _):rest) =
       case gameWinner board of
-        Just w  -> Just w
+        Just w -> Just w
         Nothing -> findWinner rest
 
-    nextLayer layer =
-      concat [ [ makeMove state mv
-               | mv <- checkLegalMoves state ]
-             | state <- layer ]
-
-
--- a solution, but wrong
--- whoWillWin :: GameState -> Winner
--- whoWillWin (board, player, forced)
---   | w /= Unfinished = w
---   | otherwise       = bestOutcome player
---       [whoWillWin (makeMove (board, player, forced) move) | move <- moves]
---   where
---     w     = gameWinner board
---     moves = case forced of
---               Nothing -> checkLegalMoves board
---               Just f  -> filter (\(b, _) -> b == f) (checkLegalMoves board)
-              
 -- bestOutcome :: Player -> [Winner] -> Winner
 -- bestOutcome X outcomes
 --   | Won X `elem` outcomes = Won X
