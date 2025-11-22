@@ -124,6 +124,9 @@ whoWillWin state =
         Just w -> Just w
         Nothing -> findWinner rest
 
+bestMove :: GameState -> Move
+bestMove state = (0,0)
+
 -- bestOutcome :: Player -> [Winner] -> Winner
 -- bestOutcome X outcomes
 --   | Won X `elem` outcomes = Won X
