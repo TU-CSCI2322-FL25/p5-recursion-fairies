@@ -65,8 +65,8 @@ boardToSubBoard [] = []
 boardToSubBoard ((Complete (Won a)):xs) =(Full a):(boardToSubBoard xs)
 boardToSubBoard (x:xs) = Emp:(boardToSubBoard xs)
 
-checkLegalMoves :: Board -> [Move]
-checkLegalMoves game = let -- auxMain is a recursive function that goes through a board and calls auxSub on all incomplete boards (boards with legal moves).
+checkLegalMoves :: GameState -> [Move]
+checkLegalMoves (game, _, _) = let -- auxMain is a recursive function that goes through a board and calls auxSub on all incomplete boards (boards with legal moves).
   auxMain _ [] = []
   auxMain boardLoc ((Incomplete sub):xs) = auxSub boardLoc 0 sub ++ auxMain (boardLoc + 1) xs
   auxMain boardLoc ((Complete _):xs) = auxMain (boardLoc + 1) xs
