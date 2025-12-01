@@ -33,6 +33,64 @@ checkLegalMoves (board, player, Just forced) = case board !! forced of
       auxSub subLoc (Emp:xs) = (forced, subLoc):auxSub (subLoc + 1) xs
       auxSub subLoc ((Full _):xs) = auxSub (subLoc + 1) xs
     in auxSub 0 sub
+    
+checkVertical :: Location -> [Location] -> Bool
+checkVertical a xs = (a `elem` xs) && ((a+3) `elem` xs) && ((a+6) `elem` xs )
+checkHorizontal :: Location -> [Location] -> Bool
+checkHorizontal a xs = (a `elem` xs) && ((a+1) `elem` xs) && ((a+2) `elem` xs)
+checkDiagonalLeft :: [Location] -> Bool
+checkDiagonalLeft xs = (0 `elem` xs) && (4 `elem` xs) && (8 `elem` xs)
+checkDiagonalRight :: [Location] -> Bool
+checkDiagonalRight xs = (2 `elem` xs) && (4 `elem` xs) && (6 `elem` xs)
+
+checkAllFull :: Board -> Bool
+checkAllFull [] = True
+checkAllFull ((Complete a):xs) = checkAllFull xs
+checkAllFull _ = False
+
+
+subBoardWinner:: SubBoard -> Winner
+subBoardWinner (Complete a) = a
+subBoardWinner (Incomplete spots) = 
+            let locs = zip allLocations spots
+                xsFull = catMaybes $ map isPlayerX locs
+                osFull = catMaybes $ map isPlayerO locs
+                xWins = checkWinner xsFull
+                oWins = checkWinner osFull
+                boardFull = length xsFull + length osFull == 9
+            in if xWins 
+            then Won X
+            else if oWins 
+                 then Won O 
+                 else if boardFull
+                      then Tie
+                      else Unfinished
+gameWinner :: Board -> Winner
+gameWinner brd = let temp = (boardToSubBoard brd)
+                     fullStatus = (checkAllFull brd)
+                     won = subBoardWinner (Incomplete temp)
+                 in if won == Unfinished
+                    then if fullStatus
+                         then Tie
+                         else Unfinished
+                    else won
+
+
+boardToSubBoard :: Board -> [Spot]
+boardToSubBoard [] = []
+boardToSubBoard ((Complete (Won a)):xs) =(Full a):(boardToSubBoard xs)
+boardToSubBoard (x:xs) = Emp:(boardToSubBoard xs)
+
+checkLegalMoves :: GameState -> [Move]
+checkLegalMoves (game, _, _) = let -- auxMain is a recursive function that goes through a board and calls auxSub on all incomplete boards (boards with legal moves).
+  auxMain _ [] = []
+  auxMain boardLoc ((Incomplete sub):xs) = auxSub boardLoc 0 sub ++ auxMain (boardLoc + 1) xs
+  auxMain boardLoc ((Complete _):xs) = auxMain (boardLoc + 1) xs
+  -- auxSub is a recursive function that goes through a subboard and finds all the legal moves in the board, returning legal moves as a Move.
+  auxSub _ _ [] = []
+  auxSub boardLoc subBoardLoc (Emp:xs) = (boardLoc, subBoardLoc):auxSub boardLoc (subBoardLoc + 1) xs
+  auxSub boardLoc subBoardLoc ((Full _):xs) = auxSub boardLoc (subBoardLoc + 1) xs
+  in auxMain 0 game
 
 -- Place a player's mark in a given spot of a sub-board
 placeSpot :: Player -> SubBoard -> Location -> SubBoard
