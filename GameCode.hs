@@ -82,29 +82,54 @@ gameWinner board
                 
 
 -- Core function: make a legal move
+-- Helpers
+inRange :: Int -> Bool
+inRange n = n >= 0 && n <= 8
+
+obeysForce :: Maybe Location -> Location -> Bool
+obeysForce Nothing  _ = True
+obeysForce (Just f) l = f == l
+
+
 makeMove :: GameState -> Move -> GameState
-makeMove (board, player, forced) (subLoc, cellLoc)
-  | isJust (gameWinner board) = (board, player, Nothing)
-  | subLoc < 0 || subLoc > 8 = (board, player, forced) -- Out of bounds
-  | cellLoc < 0 || cellLoc > 8 = (board, player, forced)
-  | Just f <- forced, f /= subLoc = (board, player, forced) -- Forced board rule violated
-  | Complete _ <- board !! subLoc = (board, player, forced) -- Can't play in completed sub-board
-  | Incomplete spots <- board !! subLoc, Full _ <- spots !! cellLoc = (board, player, forced) -- Can't play in a full cell
+makeMove (board, player, forced) (sbLoc, cellLoc)
+  | isJust (gameWinner board)        = (board, player, Nothing)
+  | not (inRange sbLoc)              = (board, player, Nothing)
+  | not (inRange cellLoc)            = (board, player, Nothing)
+  | not (obeysForce forced sbLoc)    = (board, player, Nothing)
+  | otherwise =
+      case splitAt sbLoc board of
+        (_, []) -> (board, player, Nothing)
+        (boardsBefore, sub : boardsAfter) ->
+          case sub of
+            Complete _ -> (board, player, Nothing)
+            Incomplete spots ->
+              case splitAt cellLoc spots of
+                (_, []) -> (board, player, Nothing)
 
-makeMove (board, player, _) (subLoc, cellLoc)
-  | Incomplete spots <- board !! subLoc, Emp <- spots !! cellLoc =
-      let newSub   = placeSpot player (Incomplete spots) cellLoc
-          newBoard = updateBoard board subLoc newSub
-          overall  = gameWinner newBoard
+                (cellsBefore, cell : cellsAfter) ->
+                  case cell of
+                    Full _ -> (board, player, Nothing)
+                    Emp ->
+                      let
+                        -- update sub-board
+                        newCells   = cellsBefore ++ Full player : cellsAfter
+                        newSub     = checkSubBoard newCells
+                        newBoard   = boardsBefore ++ newSub : boardsAfter
+                        endingState   = gameWinner newBoard
 
-          nextForced = -- You must go to the sub-board indicated by the cell you just played.
-            case newBoard !! cellLoc of
-              Incomplete _ -> Just cellLoc
-              Complete _   -> Nothing
+                        nextForced =
+                          case splitAt cellLoc newBoard of
+                            (_, target : _) ->
+                              case target of
+                                Incomplete _ -> Just cellLoc
+                                Complete _   -> Nothing
+                            _ -> Nothing
+                      in
+                        case endingState of
+                          Nothing -> (newBoard, nextPlayer player, nextForced)
+                          Just _  -> (newBoard, player, Nothing)
 
-      in case overall of
-           Nothing -> (newBoard, nextPlayer player, nextForced)
-           Just _ -> (newBoard, player, Nothing)
 
 whoWillWin :: GameState -> Winner
 whoWillWin state =
