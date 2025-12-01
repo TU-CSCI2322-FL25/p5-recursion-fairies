@@ -122,22 +122,19 @@ makeMove state@(board, player, forced) (sbLoc, cellLoc)
 
 
 whoWillWin :: GameState -> Winner
-whoWillWin state =
-  bfs [state]
-  where
-    legalMoves = checkLegalMoves state
+whoWillWin state@(board, player, forced)
+  | Just w <- checkWinner state = w
+  | otherwise =
+    let
+      children = map (makeMove state) (checkLegalMoves state)
+      childStates = map whoWillWin children
+    in choosePlayerBest player childStates
 
-    bfs [] = error "No winner found"
-    bfs layer =
-      case findWinner layer of
-        Just w -> w
-        Nothing -> bfs (concat [map (makeMove s) legalMoves | s <- layer])
-      
-    findWinner [] = Nothing
-    findWinner ((board,_,_):rest) =
-      case winnerOfBoard board of
-        Just w -> Just w
-        Nothing -> findWinner rest
+choosePlayerBest :: Player -> [Winner] -> Winner
+choosePlayerBest player wins
+  | Won player `elem` wins = Won player
+  | Tie `elem` wins = Tie
+  | otherwise = Won $ nextPlayer player
 
 bestMove :: GameState -> Move
 bestMove state = (0,0)
