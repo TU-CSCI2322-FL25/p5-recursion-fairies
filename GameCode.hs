@@ -33,50 +33,8 @@ checkLegalMoves (board, player, Just forced) = case board !! forced of
       auxSub subLoc (Emp:xs) = (forced, subLoc):auxSub (subLoc + 1) xs
       auxSub subLoc ((Full _):xs) = auxSub (subLoc + 1) xs
     in auxSub 0 sub
-    
-checkVertical :: Location -> [Location] -> Bool
-checkVertical a xs = (a `elem` xs) && ((a+3) `elem` xs) && ((a+6) `elem` xs )
-checkHorizontal :: Location -> [Location] -> Bool
-checkHorizontal a xs = (a `elem` xs) && ((a+1) `elem` xs) && ((a+2) `elem` xs)
-checkDiagonalLeft :: [Location] -> Bool
-checkDiagonalLeft xs = (0 `elem` xs) && (4 `elem` xs) && (8 `elem` xs)
-checkDiagonalRight :: [Location] -> Bool
-checkDiagonalRight xs = (2 `elem` xs) && (4 `elem` xs) && (6 `elem` xs)
 
-checkAllFull :: Board -> Bool
-checkAllFull [] = True
-checkAllFull ((Complete a):xs) = checkAllFull xs
-checkAllFull _ = False
-
-
-subBoardWinner:: SubBoard -> Winner
-subBoardWinner (Complete a) = a
-subBoardWinner (Incomplete spots) = 
-            let locs = zip allLocations spots
-                xsFull = catMaybes $ map isPlayerX locs
-                osFull = catMaybes $ map isPlayerO locs
-                xWins = checkWinner xsFull
-                oWins = checkWinner osFull
-                boardFull = length xsFull + length osFull == 9
-            in if xWins 
-            then Won X
-            else if oWins 
-                 then Won O 
-                 else if boardFull
-                      then Tie
-                      else Unfinished
-gameWinner :: Board -> Winner
-gameWinner brd = let temp = (boardToSubBoard brd)
-                     fullStatus = (checkAllFull brd)
-                     won = subBoardWinner (Incomplete temp)
-                 in if won == Unfinished
-                    then if fullStatus
-                         then Tie
-                         else Unfinished
-                    else won
-
-
-boardToSubBoard :: Board -> [Spot]
+boardToSubBoard :: Board -> SubBoard
 boardToSubBoard [] = []
 boardToSubBoard ((Complete (Won a)):xs) =(Full a):(boardToSubBoard xs)
 boardToSubBoard (x:xs) = Emp:(boardToSubBoard xs)
@@ -96,16 +54,16 @@ checkLegalMoves (game, _, _) = let -- auxMain is a recursive function that goes 
 placeSpot :: Player -> SubBoard -> Location -> SubBoard
 placeSpot p (Incomplete spots) loc =
   let newSpots = take loc spots ++ [Full p] ++ drop (loc + 1) spots
-  in checkSubBoard newSpots
+  in checkSubBoard (Incomplete newSpots)
 placeSpot _ board@(Complete _) _ = board  -- no change if already complete
 
 -- Check if a sub-board has a winner or tie
-checkSubBoard :: [Spot] -> SubBoard
-checkSubBoard spots
+checkSubBoard :: SubBoard -> SubBoard
+checkSubBoard incomplete
   | any (allOwnedBy X) lines = Complete $ Won X
   | any (allOwnedBy O) lines = Complete $ Won O
   | all isFull spots         = Complete Tie
-  | otherwise                = Incomplete spots
+  | otherwise                = incomplete
   where
     lines = [[0,1,2],[3,4,5],[6,7,8],
              [0,3,6],[1,4,7],[2,5,8],
@@ -114,15 +72,8 @@ checkSubBoard spots
     isFull (Full _)   = True
     isFull Emp        = False
 
-
--- Replace one sub-board inside the full board
-updateBoard :: Board -> Location -> SubBoard -> Board
-updateBoard board idx newSub = take idx board ++ [newSub] ++ drop (idx + 1) board
-
-
--- Check overall game winner 
-gameWinner :: Board -> Maybe Winner
-gameWinner board
+checkWinner :: GameState -> Maybe Winner
+checkWinner (board, _, _)
   | any (all (owned X)) lines = Just $ Won X
   | any (all (owned O)) lines = Just $ Won O
   | all isComplete board = Just Tie
@@ -136,8 +87,6 @@ gameWinner board
              [0,4,8],[2,4,6]]
     isComplete (Complete _) = True
     isComplete (Incomplete _) = False
-
-                
 
 -- Core function: make a legal move
 -- Helpers
@@ -158,35 +107,30 @@ makeMove (board, player, forced) (sbLoc, cellLoc)
   | otherwise =
       case splitAt sbLoc board of
         (_, []) -> (board, player, Nothing)
-        (boardsBefore, sub : boardsAfter) ->
-          case sub of
-            Complete _ -> (board, player, Nothing)
-            Incomplete spots ->
-              case splitAt cellLoc spots of
-                (_, []) -> (board, player, Nothing)
+        (boardsBefore, sub : boardsAfter) -> case sub of
+          Complete _ -> (board, player, Nothing)
+          Incomplete spots -> case splitAt cellLoc spots of
+              (_, []) -> (board, player, Nothing)
 
-                (cellsBefore, cell : cellsAfter) ->
-                  case cell of
-                    Full _ -> (board, player, Nothing)
-                    Emp ->
-                      let
-                        -- update sub-board
-                        newCells   = cellsBefore ++ Full player : cellsAfter
-                        newSub     = checkSubBoard newCells
-                        newBoard   = boardsBefore ++ newSub : boardsAfter
-                        endingState   = gameWinner newBoard
+              (cellsBefore, cell : cellsAfter) -> case cell of
+                Full _ -> (board, player, Nothing)
+                Emp -> let
+                  -- update sub-board
+                  newCells   = cellsBefore ++ Full player : cellsAfter
+                  newSub     = checkSubBoard newCells
+                  newBoard   = boardsBefore ++ newSub : boardsAfter
+                  endingState   = checkWinner newBoard
 
-                        nextForced =
-                          case splitAt cellLoc newBoard of
-                            (_, target : _) ->
-                              case target of
-                                Incomplete _ -> Just cellLoc
-                                Complete _   -> Nothing
-                            _ -> Nothing
-                      in
-                        case endingState of
-                          Nothing -> (newBoard, nextPlayer player, nextForced)
-                          Just _  -> (newBoard, player, Nothing)
+                  nextForced =
+                    case splitAt cellLoc newBoard of
+                      (_, target : _) -> case target of
+                        Incomplete _ -> Just cellLoc
+                        Complete _   -> Nothing
+                      _ -> Nothing
+                in
+                  case endingState of
+                    Nothing -> (newBoard, nextPlayer player, nextForced)
+                    Just _  -> (newBoard, player, Nothing)
 
 
 whoWillWin :: GameState -> Winner
