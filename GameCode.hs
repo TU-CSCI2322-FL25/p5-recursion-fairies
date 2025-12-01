@@ -44,15 +44,17 @@ placeSpot _ board@(Complete _) _ = board  -- no change if already complete
 -- Check if a sub-board has a winner or tie
 updateSubBoard :: [Spot] -> SubBoard
 updateSubBoard spots
-  | any (allOwnedBy X) lines = Complete $ Won X
-  | any (allOwnedBy O) lines = Complete $ Won O
+  | any (allOwnedBy X) (lines spots) = Complete $ Won X
+  | any (allOwnedBy O) (lines spots) = Complete $ Won O
   | all isFull spots         = Complete Tie
   | otherwise                = Incomplete spots
   where
-    lines = [[0,1,2],[3,4,5],[6,7,8],
-             [0,3,6],[1,4,7],[2,5,8],
-             [0,4,8],[2,4,6]]
-    allOwnedBy p idxs = all (== Full p) [spots !! i | i <- idxs]
+    lines [s0,s1,s2,s3,s4,s5,s6,s7,s8] = 
+        [[s0,s1,s2],[s3,s4,s5],[s6,s7,s8], 
+        [s0,s3,s6],[s1,s4,s7],[s2,s5,s8], 
+        [s0,s4,s8],[s2,s4,s6]] 
+    lines _ = error "invalid board"
+    allOwnedBy p = all (== Full p)
     isFull (Full _)   = True
     isFull Emp        = False
 
