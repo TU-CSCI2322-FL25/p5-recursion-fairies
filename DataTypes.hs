@@ -20,6 +20,10 @@ isPlayerO :: (Location, Spot) -> Maybe Location
 isPlayerO (i, Full O) = Just i
 isPlayerO _ = Nothing
 
+spotsFromSub :: SubBoard -> Maybe [Spot]
+spotsFromSub (Incomplete spots) = Just spots
+spotsFromSub (Complete _) = Nothing
+
 spotToPlayer :: Spot -> Player
 spotToPlayer (Full p) = p
 spotToPlayer Emp = error "Empty is not a player"
