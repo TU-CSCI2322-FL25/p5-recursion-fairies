@@ -112,9 +112,9 @@ makeMove state@(board, player, forced) (sbLoc, cellLoc)
                     endingState   = winnerOfBoard newBoard
 
                     nextForced =
-                      case splitAt cellLoc newBoard of
+                      case splitAt sbLoc newBoard of
                         (_, target : _) -> case target of
-                          Incomplete _ -> Just cellLoc
+                          Incomplete _ -> Just sbLoc
                           Complete _   -> Nothing
                         _ -> Nothing
                   in
