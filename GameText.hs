@@ -19,7 +19,7 @@ subBoardStr (Incomplete lst) =
 
 printGame :: GameState -> String
 printGame (state, player, loc) = 
-    printMainBoard state ++ "\nCurrent player is Player " ++ show player
+    printMainBoard state ++ "\nCurrent player is Player " ++ show player ++ "\nCurrent subboard is " ++ show loc
 
 printMainBoard :: Board -> String
 printMainBoard board =
@@ -28,7 +28,7 @@ printMainBoard board =
         totalRow row =
             let (r1s, r2s, r3s) = unzip3 row
             in unlines [intercalate "||" r1s, intercalate "||" r2s, intercalate "||" r3s]
-    in intercalate "=====================================" $ map totalRow mainRows
+    in intercalate "=====================================\n" $ map totalRow mainRows
 
 -- gamestate to file format
 gameStateOut :: GameState -> String

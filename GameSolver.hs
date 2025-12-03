@@ -12,6 +12,12 @@ whoWillWin state@(board, player, forced)
       childStates = map whoWillWin children
     in choosePlayerBest player childStates
 
+choosePlayerBest :: Player -> [Winner] -> Winner
+choosePlayerBest player wins
+  | Won player `elem` wins = Won player
+  | Tie `elem` wins = Tie
+  | otherwise = Won $ nextPlayer player
+
 bestMove :: GameState -> Move
 bestMove state@(game, currPlayer, _) = let
     legalMoves = checkLegalMoves state

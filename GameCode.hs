@@ -112,41 +112,12 @@ makeMove state@(board, player, forced) (sbLoc, cellLoc)
                     endingState   = winnerOfBoard newBoard
 
                     nextForced =
-                      case splitAt cellLoc newBoard of
+                      case splitAt sbLoc newBoard of
                         (_, target : _) -> case target of
-                          Incomplete _ -> Just cellLoc
+                          Incomplete _ -> Just sbLoc
                           Complete _   -> Nothing
                         _ -> Nothing
                   in
                     case endingState of
                       Nothing -> (newBoard, nextPlayer player, nextForced)
                       Just _  -> (newBoard, player, Nothing)
-
-
-whoWillWin :: GameState -> Winner
-whoWillWin state@(board, player, forced)
-  | Just w <- checkWinner state = w
-  | otherwise =
-    let
-      children = map (makeMove state) (checkLegalMoves state)
-      childStates = map whoWillWin children
-    in choosePlayerBest player childStates
-
-choosePlayerBest :: Player -> [Winner] -> Winner
-choosePlayerBest player wins
-  | Won player `elem` wins = Won player
-  | Tie `elem` wins = Tie
-  | otherwise = Won $ nextPlayer player
-
-bestMove :: GameState -> Move
-bestMove state = (0,0)
-
--- bestOutcome :: Player -> [Winner] -> Winner
--- bestOutcome X outcomes
---   | Won X `elem` outcomes = Won X
---   | Tie  `elem` outcomes  = Tie
---   | otherwise             = Won O
--- bestOutcome O outcomes
---   | Won O `elem` outcomes = Won O
---   | Tie  `elem` outcomes  = Tie
---   | otherwise             = Won X

@@ -36,6 +36,9 @@ instance Show Winner where
     show (Won player) = show player
     show Tie = "T"
 
+showMove :: Move -> String
+showMove (x, y) = "(" ++ show x ++ ", " ++ show y ++ ")"
+
 showSpot :: Spot -> String -- still deciding if i should choose one of these over the others
 showSpot (Full X) = " X "
 showSpot (Full O) = " O "
