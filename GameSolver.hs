@@ -2,8 +2,15 @@ module GameSolver where
 
 import DataTypes
 import GameCode
-import GamePrint
-import InputText
+
+whoWillWin :: GameState -> Winner
+whoWillWin state@(board, player, forced)
+  | Just w <- checkWinner state = w
+  | otherwise =
+    let
+      children = map (makeMove state) (checkLegalMoves state)
+      childStates = map whoWillWin children
+    in choosePlayerBest player childStates
 
 bestMove :: GameState -> Move
 bestMove state@(game, currPlayer, _) = let
