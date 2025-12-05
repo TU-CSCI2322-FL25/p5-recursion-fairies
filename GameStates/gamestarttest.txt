@@ -1,10 +1,10 @@
-O
-4
+X
+
 E E E E E E E E E
 E E E E E E E E E
 E E E E E E E E E
 E E E E E E E E E
-X E E E E E E E E
+E E E E E E E E E
 E E E E E E E E E
 E E E E E E E E E
 E E E E E E E E E
