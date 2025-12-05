@@ -17,11 +17,12 @@ whoWinDepth state@(board, player, forced) curDepth
       childStates = map (\s -> whoWinDepth s (curDepth+1)) children
     in (choosePlayerBest player childStates, curDepth)
 
-choosePlayerBest :: Player -> [Winner] -> Winner
-choosePlayerBest player wins
+choosePlayerBest :: Player -> [(Winner,Int)] -> Winner
+choosePlayerBest player depthOut
   | Won player `elem` wins = Won player
   | Tie `elem` wins = Tie
   | otherwise = Won $ nextPlayer player
+  where wins = [w | (w,_) <- depthOut]
 
 bestMove :: GameState -> Move
 bestMove state@(game, currPlayer, _) = let
@@ -30,10 +31,10 @@ bestMove state@(game, currPlayer, _) = let
     sortedMoves = sortBy compareDepth resultingMoves
       where compareDepth (_,(d1,_)) (_,(d2,_)) = compare d1 d2
     -- resultingGames is a list of tuples of the form (winner of the game resulting from the move being played, move)
-    winningTuple@(_,winningMove) = lookup (Won currPlayer) sortedMoves
-    in case winningMove of
-       Just move -> move
-       Nothing   -> let tieGame@(_,tieMove) = lookup Tie sortedMoves
-                    in case tieMove of
-                       Just move -> move
+    winningTuple = lookup (Won currPlayer) sortedMoves
+    in case winningTuple of
+       Just (_, move) -> move
+       Nothing -> let tieGame = lookup Tie sortedMoves
+                    in case tieGame of
+                       Just (_, move) -> move
                        Nothing   -> snd $ snd (head sortedMoves)
