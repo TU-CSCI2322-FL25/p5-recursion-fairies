@@ -33,13 +33,23 @@ loadGameState = readGameState
 
 -- defaultDepth :: Int
 -- defaultDepth = 5
+-- main :: IO ()
+-- main = do
+--   args <- getArgs
+--   if null args
+--     then putStrLn "Usage: ./game <filename>"
+--     else do
+--       let filename = head args
+--       gameState <- readGameState filename
+--       putStrLn $ showMove $ bestMove gameState 
+--       -- putStrLn $ showMove $ (whatever we name story 18) gameState defaultDepth
+
 main :: IO ()
 main = do
-  args <- getArgs
-  if null args
-    then putStrLn "Usage: ./game <filename>"
-    else do
-      let filename = head args
-      gameState <- readGameState filename
-      putStrLn $ showMove $ bestMove gameState 
-      -- putStrLn $ showMove $ (whatever we name story 18) gameState defaultDepth
+    putStrLn "What is filepath of gameState?"
+    path <- getLine
+    state <- loadGameState path
+    putState state
+    putBestMove state
+    let newState = makeMove state (bestMove state)
+    putState newState

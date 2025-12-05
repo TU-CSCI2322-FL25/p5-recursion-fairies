@@ -15,26 +15,24 @@ whoWinDepth state@(board, player, forced) curDepth
     let
       children = map (makeMove state) (checkLegalMoves state)
       childStates = map (\s -> whoWinDepth s (curDepth+1)) children
-    in (choosePlayerBest player childStates, curDepth)
+    in choosePlayerBest player childStates
 
-choosePlayerBest :: Player -> [(Winner,Int)] -> Winner
-choosePlayerBest player depthOut
-  | Won player `elem` wins = Won player
-  | Tie `elem` wins = Tie
-  | otherwise = Won $ nextPlayer player
-  where wins = [w | (w,_) <- depthOut]
+choosePlayerBest :: Player -> [(Winner,Int)] -> (Winner, Int)
+choosePlayerBest player outcomes
+  | any (\o -> fst o == Won player) outcomes = minimumBy compareDepth [out | out@(Won p, _) <- outcomes, p == player]
+  | any (\o -> fst o == Tie) outcomes = (Tie, 0)
+  | otherwise = maximumBy compareDepth [out | out@(Won p, _) <- outcomes, p /= player]
+  where
+      compareDepth (_, d1) (_, d2) = compare d1 d2
 
 bestMove :: GameState -> Move
-bestMove state@(game, currPlayer, _) = let
-    legalMoves = checkLegalMoves state
-    resultingMoves = [(winner, (depth, move)) | move <- legalMoves, let (winner, depth) = whoWinDepth (makeMove state move) 0]
-    sortedMoves = sortBy compareDepth resultingMoves
-      where compareDepth (_,(d1,_)) (_,(d2,_)) = compare d1 d2
-    -- resultingGames is a list of tuples of the form (winner of the game resulting from the move being played, move)
-    winningTuple = lookup (Won currPlayer) sortedMoves
-    in case winningTuple of
-       Just (_, move) -> move
-       Nothing -> let tieGame = lookup Tie sortedMoves
-                    in case tieGame of
-                       Just (_, move) -> move
-                       Nothing   -> snd $ snd (head sortedMoves)
+bestMove state =
+    let moves = checkLegalMoves state
+        scored = [(whoWinDepth (makeMove state mv) 0, mv) | mv <- moves]
+    in snd (minimumBy compareScore scored)
+  where
+    -- smaller depth wins if winner is same
+    compareScore ((w1,d1),_) ((w2,d2),_) =
+        compare (priority w1, d1) (priority w2, d2)
+    priority (Won _) = 0
+    priority Tie     = 1
