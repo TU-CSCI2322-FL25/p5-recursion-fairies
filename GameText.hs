@@ -72,7 +72,9 @@ parseSpot s = error ("Invalid player: " ++ s)
 
 parseSubBoard :: String -> SubBoard
 parseSubBoard [] = error "Empty SubBoard line"
-parseSubBoard [winner] = Complete $ Won $ spotToPlayer $ parseSpot [winner]
+parseSubBoard [winner] = case winner of
+    'T' -> Complete Tie
+    _ -> Complete $ Won $ spotToPlayer $ parseSpot [winner]
 parseSubBoard ln =
     let pList = words ln
     in Incomplete $ map parseSpot pList
