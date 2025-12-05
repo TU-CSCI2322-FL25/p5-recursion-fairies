@@ -4,8 +4,8 @@ type Location = Int
 allLocations = [0..8] :: [Location]
 
 data Player = X | O deriving (Show, Eq)
-data Spot = Full Player | Emp deriving (Eq)
-data Winner = Won Player | Tie deriving (Eq)
+data Spot = Full Player | Emp deriving (Show, Eq)
+data Winner = Won Player | Tie deriving (Show, Eq)
 data SubBoard = Incomplete [Spot] | Complete Winner deriving (Show, Eq)
 type Board = [SubBoard]
 
@@ -28,13 +28,13 @@ spotToPlayer :: Spot -> Player
 spotToPlayer (Full p) = p
 spotToPlayer Emp = error "Empty is not a player"
 
-instance Show Spot where
-    show (Full player) = show player
-    show Emp = "E"
+prettySpot :: Spot -> String
+prettySpot (Full player) = show player
+prettySpot Emp = "E"
 
-instance Show Winner where
-    show (Won player) = show player
-    show Tie = "T"
+prettyWinner :: Winner -> String
+prettyWinner (Won player) = show player
+prettyWinner Tie = "T"
 
 showMove :: Move -> String
 showMove (x, y) = "(" ++ show x ++ ", " ++ show y ++ ")"
