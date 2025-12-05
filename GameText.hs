@@ -10,19 +10,19 @@ import System.IO
 subBoardStr :: SubBoard -> (String, String, String)
 subBoardStr (Complete w) = 
     ("           ", 
-    "     " ++ show w ++ "     ",
+    "     " ++ prettyWinner w ++ "     ",
     "           ")
 subBoardStr (Incomplete lst) =
-    let rows = chunksOf 3 (map showSpot lst)
+    let rows = chunksOf 3 $ map (\s -> " " ++ prettySpot s ++ " ") lst
         rowStrs@[r1, r2, r3] = map (intercalate "|") rows
     in (r1, r2, r3)
 
-printGame :: GameState -> String
-printGame (state, player, loc) = 
-    printMainBoard state ++ "\nCurrent player is Player " ++ show player ++ "\nCurrent subboard is " ++ show loc
+showGame :: GameState -> String
+showGame (state, player, loc) = 
+    showMainBoard state ++ "\nCurrent player is Player " ++ show player ++ "\nCurrent subboard is " ++ show loc
 
-printMainBoard :: Board -> String
-printMainBoard board =
+showMainBoard :: Board -> String
+showMainBoard board =
     let subStrs = map subBoardStr board
         mainRows = chunksOf 3 subStrs
         totalRow row =
@@ -46,8 +46,8 @@ mainBoardOut board = let shownBoard = map subBoardOut board
     in unlines shownBoard
 
 subBoardOut :: SubBoard -> String
-subBoardOut (Complete w) = show w
-subBoardOut (Incomplete lst) = let shownSpots = map show lst
+subBoardOut (Complete w) = prettyWinner w
+subBoardOut (Incomplete lst) = let shownSpots = map prettySpot lst
     in unwords shownSpots
 
 -- file to string code

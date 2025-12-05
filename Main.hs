@@ -10,7 +10,7 @@ putBestMove state = putStrLn $ showMove $ bestMove state
     
 
 putState :: GameState -> IO ()
-putState state = putStrLn $ printGame state
+putState state = putStrLn $ showGame state
 
 writeGameState :: FilePath -> GameState -> IO ()
 writeGameState path state = writeFile path $ gameStateOut state
