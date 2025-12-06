@@ -3,7 +3,6 @@ module GameText where
 import DataTypes
 
 import Data.List (intercalate)
-import Data.List.Split (chunksOf)
 import System.IO
 
 -- gamestate to printable format
@@ -78,3 +77,7 @@ parseSubBoard [winner] = case winner of
 parseSubBoard ln =
     let pList = words ln
     in Incomplete $ map parseSpot pList
+
+chunksOf :: Int -> [a] -> [[a]]
+chunksOf _ [] = []
+chunksOf n xs = take n xs : chunksOf n (drop n xs)

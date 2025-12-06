@@ -3,10 +3,10 @@ import DataTypes
 import GameCode
 import GameText
 import GameSolver
-import System.IO
 import System.Console.GetOpt
+import System.Environment (getArgs)
 
-data Flag = Help | Winner | Depth String | Move Move | Verbose-- | Interactive
+data Flag = Help | Winner | Depth String | Move Move | Verbose deriving (Eq)-- | Interactive
 
 options :: [OptDescr Flag]
 options = [ Option ['h'] ["help"] (NoArg Help) "Print usage information and exit."
@@ -17,39 +17,42 @@ options = [ Option ['h'] ["help"] (NoArg Help) "Print usage information and exit
           -- , Option ['i'] ["interactive"] (NoArg Interactive) "Start a new game and play against the computer."
           ]
           
--- other io
-putBestMove :: GameState -> IO ()
-putBestMove state = putStrLn $ showMove $ bestMove state
-    
 
-putState :: GameState -> IO ()
-putState state = putStrLn $ showGame state
 
-writeGameState :: FilePath -> GameState -> IO ()
-writeGameState path state = writeFile path $ gameStateOut state
-
-loadGameState :: FilePath -> IO GameState
-loadGameState = readGameState
-
--- defaultDepth :: Int
--- defaultDepth = 5
--- main :: IO ()
--- main = do
---   args <- getArgs
---   if null args
---     then putStrLn "Usage: ./game <filename>"
---     else do
---       let filename = head args
---       gameState <- readGameState filename
---       putStrLn $ showMove $ bestMove gameState 
---       -- putStrLn $ showMove $ (whatever we name story 18) gameState defaultDepth
+--defaultDepth :: Int
+--defaultDepth = 5
 
 main :: IO ()
 main = do
-    putStrLn "What is filepath of gameState?"
-    path <- getLine
-    state <- loadGameState path
-    putState state
-    putBestMove state
-    let newState = makeMove state (bestMove state)
-    putState newState
+  args <- getArgs
+  let (flags, files, _) = getOpt Permute options args
+  
+  if Help `elem` flags then
+    putStrLn $ usageInfo "Usage: ./main [OPTIONS] <filename>\n" options
+  else if null files then
+    putStrLn "Usage: ./main <filename>"
+  else do
+    gameState <- readGameState (head files)
+    let verbose = Verbose `elem` flags
+        moves = [m | Move m <- flags]
+        depths = [d | Depth d <- flags]
+    
+    if not (null moves) then
+      let newState = makeMove gameState (head moves)
+      in if verbose then putStrLn $ showGame newState 
+                    else putStrLn $ gameStateOut newState
+    
+    else if Winner `elem` flags then
+      if verbose then do
+        putStrLn $ "Best move: " ++ showMove (bestMove gameState)
+        putStrLn $ "Expected outcome: " ++ prettyWinner (whoWillWin gameState)
+      else putStrLn $ showMove (bestMove gameState)
+    
+    else if not (null depths) then
+      --Story 23 - Depth flag (using bestMove for now so we can still compile)
+      let _ = read (head depths) :: Int  --We can read the depth, but we are not using it till story 17 is completed
+      in putStrLn $ showMove (bestMove gameState)
+    
+    else
+      --Default (using bestMove for now so we can still compile)
+      putStrLn $ showMove (bestMove gameState)
