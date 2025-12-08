@@ -36,3 +36,46 @@ bestMove state =
         compare (priority w1, d1) (priority w2, d2)
     priority (Won _) = 0
     priority Tie     = 1
+
+rateSubboard :: SubBoard -> Player -> Maybe Int
+rateSubboard (Complete a) p = if a == Won p
+                              then 5 else 0
+rateSubboard brd@(Incomplete [a, b, c, d, e, f, g, h, i]) p = 
+              let lines    =  [[a, b, c], [d, e, f], [g, h, i]
+                               [a, d, g], [b, e, h], [c, f, i]
+                               [a, e, i], [c, e, g]]
+                  score lst = if (Full (nextPlayer p)`elem` lst)
+                              then 0
+                              else length $ filter (\x -> x == Full p) lst
+                  scored = sum $ map score lines 
+              in case scored of | scored > 7 = 4
+                                | scored > 4 = 3
+                                | scored > 1 = 2
+                                | scored > 0 = 1
+
+rateGame :: Game -> Int
+rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m ) = 
+                  let lines    =  [[a, b, c], [d, e, f], [g, h, i]
+                                  [a, d, g], [b, e, h], [c, f, i]
+                                  [a, e, i], [c, e, g]]
+                      fixLines xs = if all canWin xs
+                      scored = map rateSubboard $ filter fixLines lines
+                      otherScored = rateGame (brd, (nextPlayer p), m)
+                      winner = winnerOfBoard brd 
+                  in case winner of
+                       Just Won p -> 50
+                       Just Won (nextPlayer p) -> -50
+                       Just Tie -> 0
+                       Nothing -> scored - otherScored
+
+
+canWin :: SubBoard -> Player -> Bool
+canWin (Complete a) p = if a == (Won p) then True else False
+canWin (Incomplete brd@[a, b, c, d, e, f, g, h, i]) =
+                  let lines   = [[a, b, c], [d, e, f], [g, h, i]
+                                 [a, d, g], [b, e, h], [c, f, i]
+                                 [a, e, i], [c, e, g]]
+                      isEnemy a = if a == Won (nextPlayer p) then True else False
+                      fixLine xs a = if any (map isEnemy xs) then False else True
+                  in  length (filter fixLine lines) > 0  
+                      
