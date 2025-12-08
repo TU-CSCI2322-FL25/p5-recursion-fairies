@@ -63,8 +63,8 @@ rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m ) =
                       otherScored = rateGame (brd, (nextPlayer p), m)
                       winner = winnerOfBoard brd 
                   in case winner of
-                       Just Won p -> 50
-                       Just Won (nextPlayer p) -> -50
+                       Just Won p -> 110
+                       Just Won (nextPlayer p) -> -110
                        Just Tie -> 0
                        Nothing -> scored - otherScored
 
@@ -79,3 +79,11 @@ canWin (Incomplete brd@[a, b, c, d, e, f, g, h, i]) =
                       fixLine xs a = if any (map isEnemy xs) then False else True
                   in  length (filter fixLine lines) > 0  
                       
+whoMightWin :: Game -> Int -> (Int, Move)
+whoMightWin game i = 
+          where moves = checkLegalMoves game
+                rates = if i == 1 then map rateGame    $  map makeMove moves
+                                  else map whoMightWin $ (map makeMove moves) i
+                bestMove [x] = X
+                bestMove (x:xs) = let prev = bestMove xs
+                                  in if (fst prev) > (fst x) then x else prev              
