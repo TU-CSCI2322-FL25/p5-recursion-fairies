@@ -48,23 +48,23 @@ rateSubboard brd@(Incomplete [a, b, c, d, e, f, g, h, i]) p =
                               then 0
                               else length $ filter (\x -> x == Full p) lst
                   scored = sum $ map score lines 
-              in case scored of | scored > 7 = 4
-                                | scored > 4 = 3
-                                | scored > 1 = 2
+              in case scored of | scored > 8 = 4
+                                | scored > 6 = 3
+                                | scored > 4 = 2
                                 | scored > 0 = 1
 
-rateGame :: Game -> Int
+rateGame :: GameState -> Int
 rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m ) = 
                   let lines    =  [[a, b, c], [d, e, f], [g, h, i]
-                                  [a, d, g], [b, e, h], [c, f, i]
-                                  [a, e, i], [c, e, g]]
-                      fixLines xs = if all canWin xs
+                                   [a, d, g], [b, e, h], [c, f, i]
+                                   [a, e, i], [c, e, g]]
+                      fixLines xs = all canWin xs 
                       scored = map rateSubboard $ filter fixLines lines
                       otherScored = rateGame (brd, (nextPlayer p), m)
                       winner = winnerOfBoard brd 
                   in case winner of
-                       Just Won p -> 50
-                       Just Won (nextPlayer p) -> -50
+                       Just Won p -> 110
+                       Just Won (nextPlayer p) -> -110
                        Just Tie -> 0
                        Nothing -> scored - otherScored
 
@@ -79,3 +79,11 @@ canWin (Incomplete brd@[a, b, c, d, e, f, g, h, i]) =
                       fixLine xs a = if any (map isEnemy xs) then False else True
                   in  length (filter fixLine lines) > 0  
                       
+whoMightWin :: GameState -> Int -> (Int, Move)
+whoMightWin game i = 
+          where moves = checkLegalMoves game
+                rates = if i == 1 then map rateGame    $  map makeMove moves
+                                  else map whoMightWin $ (map makeMove moves) i
+                bestMove [x] = X
+                bestMove (x:xs) = let prev = bestMove xs
+                                  in if (fst prev) > (fst x) then x else prev              
