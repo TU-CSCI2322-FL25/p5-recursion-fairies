@@ -77,8 +77,8 @@ winnerOfBoard board
 checkWinner :: GameState -> Maybe Winner
 checkWinner (board, _, _) = winnerOfBoard board
 
--- Core function: make a legal move
--- Helpers
+--Core function: make a legal move
+--Helpers
 inRange :: Int -> Bool
 inRange n = n >= 0 && n <= 8
 
