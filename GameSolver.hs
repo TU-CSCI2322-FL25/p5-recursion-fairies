@@ -48,16 +48,16 @@ rateSubboard brd@(Incomplete [a, b, c, d, e, f, g, h, i]) p =
                               then 0
                               else length $ filter (\x -> x == Full p) lst
                   scored = sum $ map score lines 
-              in case scored of | scored > 7 = 4
-                                | scored > 4 = 3
-                                | scored > 1 = 2
+              in case scored of | scored > 8 = 4
+                                | scored > 6 = 3
+                                | scored > 4 = 2
                                 | scored > 0 = 1
 
-rateGame :: Game -> Int
+rateGame :: GameState -> Int
 rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m ) = 
                   let lines    =  [[a, b, c], [d, e, f], [g, h, i]
-                                  [a, d, g], [b, e, h], [c, f, i]
-                                  [a, e, i], [c, e, g]]
+                                   [a, d, g], [b, e, h], [c, f, i]
+                                   [a, e, i], [c, e, g]]
                       fixLines xs = all canWin xs 
                       scored = map rateSubboard $ filter fixLines lines
                       otherScored = rateGame (brd, (nextPlayer p), m)
@@ -79,7 +79,7 @@ canWin (Incomplete brd@[a, b, c, d, e, f, g, h, i]) =
                       fixLine xs a = if any (map isEnemy xs) then False else True
                   in  length (filter fixLine lines) > 0  
                       
-whoMightWin :: Game -> Int -> (Int, Move)
+whoMightWin :: GameState -> Int -> (Int, Move)
 whoMightWin game i = 
           where moves = checkLegalMoves game
                 rates = if i == 1 then map rateGame    $  map makeMove moves
