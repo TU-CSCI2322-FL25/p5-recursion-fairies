@@ -58,7 +58,7 @@ rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m ) =
                   let lines    =  [[a, b, c], [d, e, f], [g, h, i]
                                   [a, d, g], [b, e, h], [c, f, i]
                                   [a, e, i], [c, e, g]]
-                      fixLines xs = if all canWin xs
+                      fixLines xs = all canWin xs 
                       scored = map rateSubboard $ filter fixLines lines
                       otherScored = rateGame (brd, (nextPlayer p), m)
                       winner = winnerOfBoard brd 
