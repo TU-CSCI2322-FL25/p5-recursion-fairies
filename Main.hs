@@ -6,13 +6,13 @@ import GameSolver
 import System.Console.GetOpt
 import System.Environment (getArgs)
 
-data Flag = Help | Winner | Depth String | Move Move | Verbose | Interactive deriving (Eq)-- | Interactive
+data Flag = Help | Winner | Depth String | MoveStr String | Verbose | Interactive deriving (Eq)-- | Interactive
 
 options :: [OptDescr Flag]
 options = [ Option ['h'] ["help"] (NoArg Help) "Print usage information and exit."
           , Option ['w'] ["winner"] (NoArg Winner) "Find the best move for the current player."
           , Option ['d'] ["depth"] (ReqArg Depth "<#>") "Find the best move for the current player with a specified cutoff depth."
-          , Option ['m'] ["move"] (ReqArg (Move . read) "<move>") "Make the specified move and print the resulting board."
+          , Option ['m'] ["move"] (ReqArg MoveStr "<move>") "Make the specified move and print the resulting board."
           , Option ['v'] ["verbose"] (NoArg Verbose) "An option for -move; print the resulting board alongside a rating of the move made."
           , Option ['i'] ["interactive"] (NoArg Interactive) "Start a new game and play against the computer."
           ]
@@ -44,13 +44,16 @@ main = do
   else do
     gameState <- readGameState (head files)
     let verbose = Verbose `elem` flags
-        moves = [m | Move m <- flags]
+        moveStrs = [m | MoveStr m <- flags]
         depths = [d | Depth d <- flags]
     
-    if not (null moves) then
-      let newState = makeMove gameState (head moves)
-      in if verbose then putStrLn $ showGame newState 
-                    else putStrLn $ gameStateOut newState
+    if not (null moveStrs) then
+      case parseMove (head moveStrs) of 
+        Nothing -> putStrLn "Error: Invalid move format. Use (x,y) format." 
+        Just move -> 
+          let newState = makeMove gameState move
+          in if verbose then putStrLn $ showGame newState 
+                        else putStrLn $ gameStateOut newState
     
     else if Winner `elem` flags then
       if verbose then do
@@ -67,7 +70,7 @@ main = do
       --Default (using bestMove for now so we can still compile)
       putStrLn $ showMove (bestMove gameState)
 
-ongoingGame :: GameState -> Maybe Move -> IO () -- do Nothing for move to let computer go first
+ongoingGame :: GameState -> Maybe Move -> IO () --do Nothing for move to let computer go first
 ongoingGame state Nothing = do
   roboTurn state
 ongoingGame state (Just move) = do
