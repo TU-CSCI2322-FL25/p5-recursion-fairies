@@ -6,7 +6,7 @@ import GameSolver
 import System.Console.GetOpt
 import System.Environment (getArgs)
 
-data Flag = Help | Winner | Depth String | Move Move | Verbose deriving (Eq)-- | Interactive
+data Flag = Help | Winner | Depth String | Move Move | Verbose | Interactive deriving (Eq)-- | Interactive
 
 options :: [OptDescr Flag]
 options = [ Option ['h'] ["help"] (NoArg Help) "Print usage information and exit."
@@ -14,7 +14,7 @@ options = [ Option ['h'] ["help"] (NoArg Help) "Print usage information and exit
           , Option ['d'] ["depth"] (ReqArg Depth "<#>") "Find the best move for the current player with a specified cutoff depth."
           , Option ['m'] ["move"] (ReqArg (Move . read) "<move>") "Make the specified move and print the resulting board."
           , Option ['v'] ["verbose"] (NoArg Verbose) "An option for -move; print the resulting board alongside a rating of the move made."
-          -- , Option ['i'] ["interactive"] (NoArg Interactive) "Start a new game and play against the computer."
+          , Option ['i'] ["interactive"] (NoArg Interactive) "Start a new game and play against the computer."
           ]
           
 
@@ -29,6 +29,16 @@ main = do
   
   if Help `elem` flags then
     putStrLn $ usageInfo "Usage: ./main [OPTIONS] <filename>\n" options
+  else if Interactive `elem` flags then do
+    newGame <- readGameState "GameStates/gamestart.txt"
+    
+    putStrLn "New Game"
+
+    putStrLn "What is your first move (leave blank for robot turn first)"
+    mvStr <- getLine
+    initMove <- initEnterMove mvStr
+    ongoingGame newGame initMove
+    
   else if null files then
     putStrLn "Usage: ./main <filename>"
   else do
@@ -56,3 +66,50 @@ main = do
     else
       --Default (using bestMove for now so we can still compile)
       putStrLn $ showMove (bestMove gameState)
+
+ongoingGame :: GameState -> Maybe Move -> IO () -- do Nothing for move to let computer go first
+ongoingGame state Nothing = do
+  roboTurn state
+ongoingGame state (Just move) = do
+  let stateAfter = makeMove state move
+  putGameState stateAfter
+  case checkWinner stateAfter of
+    Nothing -> roboTurn stateAfter
+    Just w -> putStrLn ("Player " ++ prettyWinner w ++ " wins")
+
+roboTurn :: GameState -> IO ()
+roboTurn state = do
+  putStrLn "Robot deciding best move"
+  let roboState = makeMove state $ bestMove state -- Should be updated to a small depth version
+  putGameState roboState
+
+  case checkWinner roboState of
+    Nothing -> do
+      putStrLn "Input next move"
+      mvStr <- getLine
+      nMove <- enterMove mvStr
+      ongoingGame roboState $ Just nMove
+    Just w -> putStrLn ("Player " ++ prettyWinner w ++ " wins")
+
+initEnterMove :: String -> IO (Maybe Move)
+initEnterMove [] = do
+  putStrLn "Computer going first"
+  return Nothing
+initEnterMove mv =
+  case parseMove mv of
+    Nothing -> do
+      putStrLn "Re-enter move with correct syntax"
+      nMv <- getLine
+      initEnterMove nMv
+    Just nMv -> do
+      return $ Just nMv
+
+enterMove :: String -> IO Move
+enterMove mv = do
+  case parseMove mv of
+    Nothing -> do
+      putStrLn "Re-enter move with correct syntax"
+      nMv <- getLine
+      enterMove nMv
+    Just nMv -> do
+      return nMv

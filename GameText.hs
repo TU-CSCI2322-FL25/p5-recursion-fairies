@@ -40,6 +40,9 @@ gameStateOut (board, player, cur) =
             Nothing -> ""
         b = mainBoardOut board
 
+putGameState :: GameState -> IO ()
+putGameState x = putStrLn $ gameStateOut x
+
 mainBoardOut :: Board -> String
 mainBoardOut board = let shownBoard = map subBoardOut board
     in unlines shownBoard
@@ -68,6 +71,12 @@ parseSpot "X" = Full X
 parseSpot "O" = Full O
 parseSpot "E" = Emp
 parseSpot s = error ("Invalid player: " ++ s)
+
+parseMove :: String -> Maybe Move
+parseMove s =
+    case reads s :: [((Int, Int), String)] of
+        [((a, b), "")] -> Just (a, b)
+        _              -> Nothing
 
 parseSubBoard :: String -> SubBoard
 parseSubBoard [] = error "Empty SubBoard line"
