@@ -19,8 +19,8 @@ options = [ Option ['h'] ["help"] (NoArg Help) "Print usage information and exit
           
 
 
---defaultDepth :: Int
---defaultDepth = 5
+defaultDepth :: Int
+defaultDepth = 5
 
 main :: IO ()
 main = do
@@ -30,6 +30,7 @@ main = do
   if Help `elem` flags then
     putStrLn $ usageInfo "Usage: ./main [OPTIONS] <filename>\n" options
   else if Interactive `elem` flags then do
+    let depths = [d | Depth d <- flags]
     newGame <- readGameState "GameStates/gamestart.txt"
     
     putStrLn "New Game"
@@ -37,8 +38,7 @@ main = do
     putStrLn "What is your first move (leave blank for robot turn first)"
     mvStr <- getLine
     initMove <- initEnterMove mvStr
-    ongoingGame newGame initMove
-    
+    if null depths then ongoingGame newGame initMove defaultDepth else ongoingGame newGame initMove $ read $ head depths
   else if null files then
     putStrLn "Usage: ./main <filename>"
   else do
@@ -52,7 +52,7 @@ main = do
         Nothing -> putStrLn "Error: Invalid move format. Use (x,y) format." 
         Just move -> 
           let newState = makeMove gameState move
-          in if verbose then putStrLn $ showGame newState 
+          in if verbose then putGameState newState 
                         else putStrLn $ gameStateOut newState
     
     else if Winner `elem` flags then
@@ -68,23 +68,23 @@ main = do
     
     else
       --Default (using bestMove for now so we can still compile)
-      putStrLn $ showMove (bestMove gameState)
+      putStrLn $ showMove $ snd (whoMightWin gameState defaultDepth 0)
 
-ongoingGame :: GameState -> Maybe Move -> IO () --do Nothing for move to let computer go first
-ongoingGame state Nothing = do
-  roboTurn state
-ongoingGame state (Just move) = do
+ongoingGame :: GameState -> Maybe Move -> Int -> IO () --do Nothing for move to let computer go first
+ongoingGame state Nothing d = do
+  roboTurn state d
+ongoingGame state (Just move) d = do
   validMove <- validityMove state move
   let stateAfter = makeMove state validMove
   putGameState stateAfter
   case checkWinner stateAfter of
-    Nothing -> roboTurn stateAfter
+    Nothing -> roboTurn stateAfter d
     Just w -> putStrLn ("Player " ++ prettyWinner w ++ " wins")
 
-roboTurn :: GameState -> IO ()
-roboTurn state = do
+roboTurn :: GameState -> Int -> IO ()
+roboTurn state d = do
   putStrLn "Robot deciding best move"
-  let roboState = makeMove state $ snd $ whoMightWin state 3 0
+  let roboState = makeMove state $ snd $ whoMightWin state d 0
   putGameState roboState
 
   case checkWinner roboState of
@@ -92,7 +92,7 @@ roboTurn state = do
       putStrLn "Input next move"
       mvStr <- getLine
       nMove <- enterMove mvStr
-      ongoingGame roboState $ Just nMove
+      ongoingGame roboState (Just nMove) d
     Just w -> putStrLn ("Player " ++ prettyWinner w ++ " wins")
 
 initEnterMove :: String -> IO (Maybe Move)
