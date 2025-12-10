@@ -129,19 +129,28 @@ canWin (Incomplete [a, b, c, d, e, f, g, h, i]) p =
 whoMightWin :: GameState -> Int -> Int -> (Int, Move)
 whoMightWin game maxDepth curDepth =
   case checkWinner game of
-    Just w -> (110, (-1,-1))
-    _ ->
+    Just (Won p) -> 
+      let (board, player, _) = game
+      in if p == player then (110, (-1,-1)) else (-110, (-1,-1))
+    Just Tie -> (0, (-1,-1))
+    Nothing ->
       if curDepth >= maxDepth
-        then
-          (rateGame game, (-1,-1))
+        then (rateGame game, (-1,-1))
         else
-          pickBest scored
+          let moves = checkLegalMoves game
+              (board, player, _) = game
+          in pickBestLazy player moves (-111) ((-1,-1))
       where
-        moves = checkLegalMoves game
-        scored = [ (s, mv) | mv <- moves, let (s, _) = whoMightWin (makeMove game mv) maxDepth (curDepth + 1)]
-
-        pickBest ((s,m):rest) =
-          if s >= 110 then (s,m) else
-          let (s2,m2) = pickBest rest
-          in if s2 > s then (s2,m2) else (s,m)
-        pickBest [] = error "No moves"
+        pickBestLazy :: Player -> [Move] -> Int -> Move -> (Int, Move)
+        pickBestLazy _ [] bestScore bestMove = (bestScore, bestMove)
+        pickBestLazy player (mv:rest) bestScore bestMove =
+          let (score, _) = whoMightWin (makeMove game mv) maxDepth (curDepth + 1)
+              -- Negate score because it's from opponent's perspective
+              myScore = negate score
+          in
+            --If we found a guaranteed win, stop searching
+            if myScore >= 110 then (myScore, mv)
+            --Otherwise, continue searching but keep track of best so far
+            else if myScore > bestScore
+              then pickBestLazy player rest myScore mv
+              else pickBestLazy player rest bestScore bestMove
