@@ -72,8 +72,10 @@ main = do
 
 ongoingGame :: GameState -> Maybe Move -> IO () --do Nothing for move to let computer go first
 ongoingGame state Nothing = do
+  putStrLn "received no move for ongoing game"
   roboTurn state
 ongoingGame state (Just move) = do
+  putStrLn "received a move"
   let stateAfter = makeMove state move
   putGameState stateAfter
   case checkWinner stateAfter of
@@ -83,7 +85,7 @@ ongoingGame state (Just move) = do
 roboTurn :: GameState -> IO ()
 roboTurn state = do
   putStrLn "Robot deciding best move"
-  let roboState = makeMove state $ snd $ whoMightWin state 2 0 -- Should be updated to a small depth version
+  let roboState = makeMove state $ snd $ whoMightWin state 3 0
   putGameState roboState
 
   case checkWinner roboState of

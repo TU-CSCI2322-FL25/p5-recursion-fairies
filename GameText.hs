@@ -41,7 +41,7 @@ gameStateOut (board, player, cur) =
         b = mainBoardOut board
 
 putGameState :: GameState -> IO ()
-putGameState x = putStrLn $ gameStateOut x
+putGameState x = putStrLn $ showGame x
 
 mainBoardOut :: Board -> String
 mainBoardOut board = let shownBoard = map subBoardOut board

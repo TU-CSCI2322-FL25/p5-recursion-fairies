@@ -10,25 +10,6 @@ import Debug.Trace
 whoWillWin :: GameState -> Winner
 whoWillWin state = fst $ whoWinDepth state 0
 
-
--- whoMightWinDepth :: GameState -> Int -> Int -> (Int, Move, Int)
--- whoMightWinDepth state@(board, player, forced) maxDepth curDepth
---   | Just w <- checkWinner state = (w, curDepth)
---   | curDepth >= maxDepth = rateGame state
---   | otherwise =
---     let
---       children = map (makeMove state) (checkLegalMoves state)
---       childStates = map (\s -> whoWinDepth s (curDepth+1)) children
---     in chooseBest player childStates
-
--- chooseBest :: Player -> [(Winner,Int)] -> (Winner, Int)
--- chooseBest player outcomes
---   | any (\o -> fst o == Won player) outcomes = minimumBy compareDepth [out | out@(Won p, _) <- outcomes, p == player]
---   | any (\o -> fst o == Tie) outcomes = (Tie, 0)
---   | otherwise = maximumBy compareDepth [out | out@(Won p, _) <- outcomes, p /= player]
---   where
---       compareDepth (_, d1) (_, d2) = compare d1 d2
-
 whoWinDepth :: GameState -> Int -> (Winner, Int)
 whoWinDepth state@(board, player, forced) curDepth
   | Just w <- checkWinner state = (w, curDepth)
@@ -103,24 +84,6 @@ canWin (Incomplete [a, b, c, d, e, f, g, h, i]) p =
     isEnemy _ = False
     fixLine xs = not $ any isEnemy xs
   in any fixLine lines
-                      
--- whoMightWin :: GameState -> Int -> (Int, Move)
--- whoMightWin game 1 =
---   case checkLegalMoves game of
---     [] -> error "No legal moves" -- this is probably always going to happen? either way it should just be someone has won
---     moves ->
---       let scored = [(rateGame (makeMove game mv), mv) | mv <- moves]
---       in maximum scored
--- whoMightWin game depth = 
---   case checkWinner game of
---     Just w -> error "someone won" -- 
---     Nothing ->
---       let
---         moves = checkLegalMoves game
---         scored = [
---           let (s, _) = whoMightWin (makeMove game mv) (depth -1)
---           in (s, mv) | mv <- moves]
---       in maximum scored
 
 whoMightWin :: GameState -> Int -> Int -> (Int, Move)
 whoMightWin game maxDepth curDepth =
