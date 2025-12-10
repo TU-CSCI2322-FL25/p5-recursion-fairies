@@ -148,10 +148,20 @@ whoMightWin game maxDepth curDepth =
       in if newState == game
          then pickBestLazy player rest bestScore bestMove
          else
-           let (score, _) = whoMightWin newState maxDepth (curDepth + 1)
-               myScore = negate score
-           in if myScore >= 110 
-              then (myScore, mv)
-              else if myScore > bestScore
-                then pickBestLazy player rest myScore mv
-                else pickBestLazy player rest bestScore bestMove
+           -- CHECK WINNER IMMEDIATELY after the move
+           case checkWinner newState of
+             Just (Won p) | p == player -> (110, mv)  -- We won! Return immediately
+             Just (Won p) -> pickBestLazy player rest bestScore bestMove  -- We lost, skip
+             Just Tie -> 
+               let newScore = 0
+               in if newScore > bestScore
+                  then pickBestLazy player rest newScore mv
+                  else pickBestLazy player rest bestScore bestMove
+             Nothing ->
+               let (score, _) = whoMightWin newState maxDepth (curDepth + 1)
+                   myScore = negate score
+               in if myScore >= 110 
+                  then (myScore, mv)
+                  else if myScore > bestScore
+                    then pickBestLazy player rest myScore mv
+                    else pickBestLazy player rest bestScore bestMove
