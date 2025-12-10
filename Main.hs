@@ -72,11 +72,10 @@ main = do
 
 ongoingGame :: GameState -> Maybe Move -> IO () --do Nothing for move to let computer go first
 ongoingGame state Nothing = do
-  putStrLn "received no move for ongoing game"
   roboTurn state
 ongoingGame state (Just move) = do
-  putStrLn "received a move"
-  let stateAfter = makeMove state move
+  validMove <- validityMove state move
+  let stateAfter = makeMove state validMove
   putGameState stateAfter
   case checkWinner stateAfter of
     Nothing -> roboTurn stateAfter
@@ -118,3 +117,13 @@ enterMove mv = do
       enterMove nMv
     Just nMv -> do
       return nMv
+
+validityMove :: GameState -> Move -> IO Move
+validityMove state@(board, player, forced) mv@(a,b) =
+  case forced of
+    Nothing -> do return mv
+    _ ->
+      if forced == Just a then do return mv else do
+        putStrLn "Move must be within the forced subBoard"
+        mv2 <- enterMove ""
+        validityMove state mv2

@@ -85,7 +85,7 @@ canWin (Incomplete [a, b, c, d, e, f, g, h, i]) p =
     fixLine xs = not $ any isEnemy xs
   in any fixLine lines
 
-whoMightWin :: GameState -> Int -> Int -> (Int, Move)
+whoMightWin :: GameState -> Int -> Int -> (Int, Move) -- uses (-1,-1) as a move that would never be used
 whoMightWin game maxDepth curDepth =
   case checkWinner game of
     Just w ->
@@ -102,7 +102,7 @@ whoMightWin game maxDepth curDepth =
               (board, player, _) = game
           in if null moves
              then (0, (-1,-1))
-             else pickBestLazy player moves (-111) ((-1,-1))
+             else pickBestLazy player moves (-111) (-1,-1)
   where
     pickBestLazy :: Player -> [Move] -> Int -> Move -> (Int, Move)
     pickBestLazy _ [] bestScore bestMove = (bestScore, bestMove)
