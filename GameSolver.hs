@@ -85,9 +85,14 @@ rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m) =
     Just (Won w) -> -110
     Just Tie -> 0
     Nothing -> 
-      let myScore = sum [rateSubboard sb p | sb <- brd]
-          enemyScore = sum [rateSubboard sb (nextPlayer p) | sb <- brd]
-      in myScore - enemyScore
+      let lines = [ [a, b, c], [d, e, f], [g, h, i],
+                    [a, d, g], [b, e, h], [c, f, i],
+                    [a, e, i], [c, e, g] ]
+          myPosWins = [x | x <- lines, all (\b -> canWin b p) x ]
+          enPosWins = [x | x <- lines, all (\b -> canWin b (nextPlayer p)) x ]  
+          myScore = sum [sum (map (\x -> rateSubboard x p) sb) | sb <- myPosWins]
+          enScore = sum [sum (map (\x -> rateSubboard x (nextPlayer p)) sb) | sb <- enPosWins]
+      in myScore - enScore
 rateGame _ = 0
 
 
