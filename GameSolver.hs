@@ -5,6 +5,7 @@ import GameCode
 
 import Data.List
 import Data.Ord
+import Debug.Trace
 
 whoWillWin :: GameState -> Winner
 whoWillWin state = fst $ whoWinDepth state 0
@@ -78,21 +79,16 @@ rateSubboard brd@(Incomplete [a, b, c, d, e, f, g, h, i]) p =
                   | otherwise  = 0
 
 rateGame :: GameState -> Int
-rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m ) = 
-                  let lines = [ [a, b, c], [d, e, f], [g, h, i],
-                              [a, d, g], [b, e, h], [c, f, i],
-                              [a, e, i], [c, e, g] ]
-                      enemy = nextPlayer p
-                      fixLines xs = canWin xs p
-                      scored = sum [rateSubboard sb p | line <- lines, sb <- filter fixLines line]
-                      otherScored = rateGame (brd, enemy, m)
-                      winner = winnerOfBoard brd
-                      
-                  in case winner of
-                       Just (Won w) | w==p -> 110
-                       Just (Won w) | w==enemy -> -110
-                       Just Tie -> 0
-                       Nothing -> scored - otherScored
+rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m) = 
+  case winnerOfBoard brd of
+    Just (Won w) | w == p -> 110
+    Just (Won w) -> -110
+    Just Tie -> 0
+    Nothing -> 
+      let myScore = sum [rateSubboard sb p | sb <- brd]
+          enemyScore = sum [rateSubboard sb (nextPlayer p) | sb <- brd]
+      in myScore - enemyScore
+rateGame _ = 0
 
 
 canWin :: SubBoard -> Player -> Bool
@@ -129,30 +125,33 @@ canWin (Incomplete [a, b, c, d, e, f, g, h, i]) p =
 whoMightWin :: GameState -> Int -> Int -> (Int, Move)
 whoMightWin game maxDepth curDepth =
   case checkWinner game of
-    Just (Won p) -> 
+    Just w ->
       let (board, player, _) = game
-      in if p == player then (110, (-1,-1)) else (-110, (-1,-1))
-    Just Tie -> (0, (-1,-1))
+      in case w of
+           Won p | p == player -> (110, (-1,-1))
+           Won p -> (-110, (-1,-1))
+           Tie -> (0, (-1,-1))
     Nothing ->
       if curDepth >= maxDepth
         then (rateGame game, (-1,-1))
-        else
+        else 
           let moves = checkLegalMoves game
               (board, player, _) = game
           in if null moves
-             then (0, (-1,-1)) --No moves available, it's a tie
+             then (0, (-1,-1))
              else pickBestLazy player moves (-111) ((-1,-1))
-      where
-        pickBestLazy :: Player -> [Move] -> Int -> Move -> (Int, Move)
-        pickBestLazy _ [] bestScore bestMove = (bestScore, bestMove)
-        pickBestLazy player (mv:rest) bestScore bestMove =
-          let newState = makeMove game mv
-              (score, _) = whoMightWin newState maxDepth (curDepth + 1)
-              --Negate score because it's from opponent's perspective after they play
-              myScore = negate score
-          in
-            if myScore >= 110 then (myScore, mv)
-            --Otherwise, continue searching but keep track of best so far
-            else if myScore > bestScore
-              then pickBestLazy player rest myScore mv
-              else pickBestLazy player rest bestScore bestMove
+  where
+    pickBestLazy :: Player -> [Move] -> Int -> Move -> (Int, Move)
+    pickBestLazy _ [] bestScore bestMove = (bestScore, bestMove)
+    pickBestLazy player (mv:rest) bestScore bestMove =
+      let newState = makeMove game mv
+      in if newState == game
+         then pickBestLazy player rest bestScore bestMove
+         else
+           let (score, _) = whoMightWin newState maxDepth (curDepth + 1)
+               myScore = negate score
+           in if myScore >= 110 
+              then (myScore, mv)
+              else if myScore > bestScore
+                then pickBestLazy player rest myScore mv
+                else pickBestLazy player rest bestScore bestMove
