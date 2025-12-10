@@ -139,16 +139,18 @@ whoMightWin game maxDepth curDepth =
         else
           let moves = checkLegalMoves game
               (board, player, _) = game
-          in pickBestLazy player moves (-111) ((-1,-1))
+          in if null moves
+             then (0, (-1,-1)) --No moves available, it's a tie
+             else pickBestLazy player moves (-111) ((-1,-1))
       where
         pickBestLazy :: Player -> [Move] -> Int -> Move -> (Int, Move)
         pickBestLazy _ [] bestScore bestMove = (bestScore, bestMove)
         pickBestLazy player (mv:rest) bestScore bestMove =
-          let (score, _) = whoMightWin (makeMove game mv) maxDepth (curDepth + 1)
-              -- Negate score because it's from opponent's perspective
+          let newState = makeMove game mv
+              (score, _) = whoMightWin newState maxDepth (curDepth + 1)
+              --Negate score because it's from opponent's perspective after they play
               myScore = negate score
           in
-            --If we found a guaranteed win, stop searching
             if myScore >= 110 then (myScore, mv)
             --Otherwise, continue searching but keep track of best so far
             else if myScore > bestScore
