@@ -1,11 +1,11 @@
 O
 4
+X
+X
+T
+X
+X E O O X E E E E
 E E E E E E E E E
-E E E E E E E E E
-E E E E E E E E E
-E E E E E E E E E
-X E E E E E E E E
-E E E E E E E E E
-E E E E E E E E E
-E E E E E E E E E
-E E E E E E E E E
+T
+T
+T
