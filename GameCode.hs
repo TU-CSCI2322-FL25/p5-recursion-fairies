@@ -60,19 +60,20 @@ updateSubBoard spots
 
 winnerOfBoard :: Board -> Maybe Winner
 winnerOfBoard board
-  | any (all (owned X)) lines = Just $ Won X
-  | any (all (owned O)) lines = Just $ Won O
+  | any (allOwnedBy X) (lines board) = Just $ Won X
+  | any (allOwnedBy O) (lines board) = Just $ Won O
   | all isComplete board = Just Tie
   | otherwise = Nothing
   where
-    owned p i  = case board !! i of
-      Complete (Won pl) -> p == pl
-      _ -> False
-    lines = [[0,1,2],[3,4,5],[6,7,8],
-             [0,3,6],[1,4,7],[2,5,8],
-             [0,4,8],[2,4,6]]
+    allOwnedBy p = all (== Complete (Won p))
+    
+    lines [s0,s1,s2,s3,s4,s5,s6,s7,s8] = 
+        [[s0,s1,s2],[s3,s4,s5],[s6,s7,s8], 
+        [s0,s3,s6],[s1,s4,s7],[s2,s5,s8], 
+        [s0,s4,s8],[s2,s4,s6]] 
+    lines _ = error "invalid board"
     isComplete (Complete _) = True
-    isComplete (Incomplete _) = False
+    isComplete _ = False
 
 checkWinner :: GameState -> Maybe Winner
 checkWinner (board, _, _) = winnerOfBoard board

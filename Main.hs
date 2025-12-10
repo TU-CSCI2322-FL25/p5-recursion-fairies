@@ -63,8 +63,8 @@ main = do
     
     else if not (null depths) then
       --Story 23 - Depth flag (using bestMove for now so we can still compile)
-      let _ = read (head depths) :: Int  --We can read the depth, but we are not using it till story 17 is completed
-      in putStrLn $ showMove (bestMove gameState)
+      let d = read (head depths) :: Int  --We can read the depth, but we are not using it till story 17 is completed
+      in putStrLn $ showMove $ snd (whoMightWin gameState d 0)
     
     else
       --Default (using bestMove for now so we can still compile)
@@ -83,7 +83,7 @@ ongoingGame state (Just move) = do
 roboTurn :: GameState -> IO ()
 roboTurn state = do
   putStrLn "Robot deciding best move"
-  let roboState = makeMove state $ bestMove state -- Should be updated to a small depth version
+  let roboState = makeMove state $ snd $ whoMightWin state 2 0 -- Should be updated to a small depth version
   putGameState roboState
 
   case checkWinner roboState of

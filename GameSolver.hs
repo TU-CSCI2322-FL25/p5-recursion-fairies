@@ -4,9 +4,29 @@ import DataTypes
 import GameCode
 
 import Data.List
+import Data.Ord
 
 whoWillWin :: GameState -> Winner
 whoWillWin state = fst $ whoWinDepth state 0
+
+
+-- whoMightWinDepth :: GameState -> Int -> Int -> (Int, Move, Int)
+-- whoMightWinDepth state@(board, player, forced) maxDepth curDepth
+--   | Just w <- checkWinner state = (w, curDepth)
+--   | curDepth >= maxDepth = rateGame state
+--   | otherwise =
+--     let
+--       children = map (makeMove state) (checkLegalMoves state)
+--       childStates = map (\s -> whoWinDepth s (curDepth+1)) children
+--     in chooseBest player childStates
+
+-- chooseBest :: Player -> [(Winner,Int)] -> (Winner, Int)
+-- chooseBest player outcomes
+--   | any (\o -> fst o == Won player) outcomes = minimumBy compareDepth [out | out@(Won p, _) <- outcomes, p == player]
+--   | any (\o -> fst o == Tie) outcomes = (Tie, 0)
+--   | otherwise = maximumBy compareDepth [out | out@(Won p, _) <- outcomes, p /= player]
+--   where
+--       compareDepth (_, d1) (_, d2) = compare d1 d2
 
 whoWinDepth :: GameState -> Int -> (Winner, Int)
 whoWinDepth state@(board, player, forced) curDepth
@@ -37,53 +57,91 @@ bestMove state =
     priority (Won _) = 0
     priority Tie     = 1
 
-rateSubboard :: SubBoard -> Player -> Maybe Int
+rateSubboard :: SubBoard -> Player -> Int
 rateSubboard (Complete a) p = if a == Won p
                               then 5 else 0
 rateSubboard brd@(Incomplete [a, b, c, d, e, f, g, h, i]) p = 
-              let lines    =  [[a, b, c], [d, e, f], [g, h, i]
-                               [a, d, g], [b, e, h], [c, f, i]
-                               [a, e, i], [c, e, g]]
-                  score lst = if (Full (nextPlayer p)`elem` lst)
+              let lines = [ [a, b, c], [d, e, f], [g, h, i],
+                          [a, d, g], [b, e, h], [c, f, i],
+                          [a, e, i], [c, e, g] ]
+                  score lst = if Full (nextPlayer p) `elem` lst
                               then 0
-                              else length $ filter (\x -> x == Full p) lst
+                              else length $ filter (== Full p) lst
                   scored = sum $ map score lines 
-              in case scored of | scored > 8 = 4
-                                | scored > 6 = 3
-                                | scored > 4 = 2
-                                | scored > 0 = 1
+              in rankScore scored
+              where
+                rankScore s
+                  | s > 8 = 4
+                  | s > 6 = 3
+                  | s > 4 = 2
+                  | s > 0 = 1
+                  | otherwise  = 0
 
 rateGame :: GameState -> Int
 rateGame (brd@[a, b, c, d, e, f, g, h, i], p, m ) = 
-                  let lines    =  [[a, b, c], [d, e, f], [g, h, i]
-                                   [a, d, g], [b, e, h], [c, f, i]
-                                   [a, e, i], [c, e, g]]
-                      fixLines xs = all canWin xs 
-                      scored = map rateSubboard $ filter fixLines lines
-                      otherScored = rateGame (brd, (nextPlayer p), m)
-                      winner = winnerOfBoard brd 
+                  let lines = [ [a, b, c], [d, e, f], [g, h, i],
+                              [a, d, g], [b, e, h], [c, f, i],
+                              [a, e, i], [c, e, g] ]
+                      enemy = nextPlayer p
+                      fixLines xs = canWin xs p
+                      scored = sum [rateSubboard sb p | line <- lines, sb <- filter fixLines line]
+                      otherScored = rateGame (brd, enemy, m)
+                      winner = winnerOfBoard brd
+                      
                   in case winner of
-                       Just Won p -> 110
-                       Just Won (nextPlayer p) -> -110
+                       Just (Won w) | w==p -> 110
+                       Just (Won w) | w==enemy -> -110
                        Just Tie -> 0
                        Nothing -> scored - otherScored
 
 
 canWin :: SubBoard -> Player -> Bool
-canWin (Complete a) p = if a == (Won p) then True else False
-canWin (Incomplete brd@[a, b, c, d, e, f, g, h, i]) =
-                  let lines   = [[a, b, c], [d, e, f], [g, h, i]
-                                 [a, d, g], [b, e, h], [c, f, i]
-                                 [a, e, i], [c, e, g]]
-                      isEnemy a = if a == Won (nextPlayer p) then True else False
-                      fixLine xs a = if any (map isEnemy xs) then False else True
-                  in  length (filter fixLine lines) > 0  
+canWin (Complete a) p = a == Won p
+canWin (Incomplete [a, b, c, d, e, f, g, h, i]) p =
+  let
+    lines =
+      [ [a, b, c], [d, e, f], [g, h, i],
+      [a, d, g], [b, e, h], [c, f, i],
+      [a, e, i], [c, e, g] ]
+    isEnemy (Full q) = q == nextPlayer p
+    isEnemy _ = False
+    fixLine xs = not $ any isEnemy xs
+  in any fixLine lines
                       
-whoMightWin :: GameState -> Int -> (Int, Move)
-whoMightWin game i = 
-          where moves = checkLegalMoves game
-                rates = if i == 1 then map rateGame    $  map makeMove moves
-                                  else map whoMightWin $ (map makeMove moves) i
-                bestMove [x] = X
-                bestMove (x:xs) = let prev = bestMove xs
-                                  in if (fst prev) > (fst x) then x else prev              
+-- whoMightWin :: GameState -> Int -> (Int, Move)
+-- whoMightWin game 1 =
+--   case checkLegalMoves game of
+--     [] -> error "No legal moves" -- this is probably always going to happen? either way it should just be someone has won
+--     moves ->
+--       let scored = [(rateGame (makeMove game mv), mv) | mv <- moves]
+--       in maximum scored
+-- whoMightWin game depth = 
+--   case checkWinner game of
+--     Just w -> error "someone won" -- 
+--     Nothing ->
+--       let
+--         moves = checkLegalMoves game
+--         scored = [
+--           let (s, _) = whoMightWin (makeMove game mv) (depth -1)
+--           in (s, mv) | mv <- moves]
+--       in maximum scored
+
+whoMightWin :: GameState -> Int -> Int -> (Int, Move)
+whoMightWin game maxDepth curDepth =
+  case checkWinner game of
+    Just w -> (110, (-1,-1))
+    _ ->
+      if curDepth >= maxDepth
+        then
+          (rateGame game, (-1,-1))
+        else
+          pickBest scored
+      where
+        moves = checkLegalMoves game
+        scored = [ (s, mv) | mv <- moves, let (s, _) = whoMightWin (makeMove game mv) maxDepth (curDepth + 1)]
+
+        pickBest ((s,m):rest) =
+          if s >= 110 then (s,m) else
+          let (s2,m2) = pickBest rest
+          in if s2 > s then (s2,m2) else (s,m)
+        pickBest [] = error "No moves"
