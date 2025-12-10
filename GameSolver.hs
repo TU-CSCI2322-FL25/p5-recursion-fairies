@@ -111,10 +111,9 @@ whoMightWin game maxDepth curDepth =
       in if newState == game
          then pickBestLazy player rest bestScore bestMove
          else
-           -- CHECK WINNER IMMEDIATELY after the move
            case checkWinner newState of
-             Just (Won p) | p == player -> (110, mv)  -- We won! Return immediately
-             Just (Won p) -> pickBestLazy player rest bestScore bestMove  -- We lost, skip
+             Just (Won p) | p == player -> (110, mv)
+             Just (Won p) -> pickBestLazy player rest bestScore bestMove
              Just Tie -> 
                let newScore = 0
                in if newScore > bestScore
