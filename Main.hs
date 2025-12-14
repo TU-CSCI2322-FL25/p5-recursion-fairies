@@ -52,8 +52,11 @@ main = do
         Nothing -> putStrLn "Error: Invalid move format. Use (x,y) format." 
         Just move -> 
           let newState = makeMove gameState move
-          in if verbose then putGameState newState 
-                        else putStrLn $ gameStateOut newState
+          in
+            case newState of
+              Just s -> if verbose then putGameState s 
+                        else putStrLn $ gameStateOut s
+              Nothing -> putStrLn "Invalid Move, Rerun"
     
     else if Winner `elem` flags then
       if verbose then do
@@ -76,24 +79,32 @@ ongoingGame state Nothing d = do
 ongoingGame state (Just move) d = do
   validMove <- validityMove state move
   let stateAfter = makeMove state validMove
-  putGameState stateAfter
-  case checkWinner stateAfter of
-    Nothing -> roboTurn stateAfter d
-    Just w -> putStrLn ("Player " ++ prettyWinner w ++ " wins")
+  case stateAfter of
+    Just s -> do
+      putGameState s
+      case checkWinner s of
+        Nothing -> roboTurn s d
+        Just w -> putStrLn ("Player " ++ prettyWinner w ++ " wins")
+    Nothing -> do
+      newMv <- enterMove
+      ongoingGame state (Just newMv) d
 
 roboTurn :: GameState -> Int -> IO ()
 roboTurn state d = do
   putStrLn "Robot deciding best move"
   let roboState = makeMove state $ snd $ whoMightWin state d 0
-  putGameState roboState
+  case roboState of
+    Just r -> do
+      putGameState r
+      case checkWinner r of
+        Nothing -> do
+          nMove <- enterMove
+          ongoingGame r (Just nMove) d
+        Just w -> putStrLn ("Player " ++ prettyWinner w ++ " wins")
+    Nothing ->
+      putStrLn "This shouldn't have happened, robot played invalid move"
 
-  case checkWinner roboState of
-    Nothing -> do
-      putStrLn "Input next move"
-      mvStr <- getLine
-      nMove <- enterMove mvStr
-      ongoingGame roboState (Just nMove) d
-    Just w -> putStrLn ("Player " ++ prettyWinner w ++ " wins")
+  
 
 initEnterMove :: String -> IO (Maybe Move)
 initEnterMove [] = do
@@ -108,13 +119,13 @@ initEnterMove mv =
     Just nMv -> do
       return $ Just nMv
 
-enterMove :: String -> IO Move
-enterMove mv = do
-  case parseMove mv of
+enterMove :: IO Move
+enterMove = do
+  putStrLn "Input a valid move, will prompt again if invalid"
+  mvStr <- getLine
+  case parseMove mvStr of
     Nothing -> do
-      putStrLn "Re-enter move with correct syntax"
-      nMv <- getLine
-      enterMove nMv
+      enterMove
     Just nMv -> do
       return nMv
 
@@ -125,5 +136,5 @@ validityMove state@(board, player, forced) mv@(a,b) =
     _ ->
       if forced == Just a then do return mv else do
         putStrLn "Move must be within the forced subBoard"
-        mv2 <- enterMove ""
+        mv2 <- enterMove
         validityMove state mv2

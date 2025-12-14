@@ -4,6 +4,7 @@ import DataTypes
 import GameCode
 
 import Data.List
+import Data.Maybe
 import Data.Ord
 import Debug.Trace
 
@@ -15,7 +16,7 @@ whoWinDepth state@(board, player, forced) curDepth
   | Just w <- checkWinner state = (w, curDepth)
   | otherwise =
     let
-      children = map (makeMove state) (checkLegalMoves state)
+      children = mapMaybe (makeMove state) (checkLegalMoves state)
       childStates = map (\s -> whoWinDepth s (curDepth+1)) children
     in choosePlayerBest player childStates
 
@@ -30,7 +31,12 @@ choosePlayerBest player outcomes
 bestMove :: GameState -> Move
 bestMove state =
     let moves = checkLegalMoves state
-        scored = [(whoWinDepth (makeMove state mv) 0, mv) | mv <- moves]
+        scored = [(whoWinDepth jm 0, mv) | mv <- moves,
+          let
+            madeMove = makeMove state mv
+            jm = case madeMove of
+              Just m -> m
+              Nothing -> error "Not supposed to happen, robo made bad move"]
     in snd (minimumBy compareScore scored)
   where
     -- smaller depth wins if winner is same
@@ -108,22 +114,24 @@ whoMightWin game maxDepth curDepth =
     pickBestLazy _ [] bestScore bestMove = (bestScore, bestMove)
     pickBestLazy player (mv:rest) bestScore bestMove =
       let newState = makeMove game mv
-      in if newState == game
-         then pickBestLazy player rest bestScore bestMove
-         else
-           case checkWinner newState of
-             Just (Won p) | p == player -> (110, mv)
-             Just (Won p) -> pickBestLazy player rest bestScore bestMove
-             Just Tie -> 
-               let newScore = 0
-               in if newScore > bestScore
-                  then pickBestLazy player rest newScore mv
-                  else pickBestLazy player rest bestScore bestMove
-             Nothing ->
-               let (score, _) = whoMightWin newState maxDepth (curDepth + 1)
-                   myScore = negate score
-               in if myScore >= 110 
-                  then (myScore, mv)
-                  else if myScore > bestScore
-                    then pickBestLazy player rest myScore mv
-                    else pickBestLazy player rest bestScore bestMove
+      in case newState of
+          Just nState -> if nState == game
+            then pickBestLazy player rest bestScore bestMove
+            else
+              case checkWinner nState of
+                Just (Won p) | p == player -> (110, mv)
+                Just (Won p) -> pickBestLazy player rest bestScore bestMove
+                Just Tie -> 
+                  let newScore = 0
+                  in if newScore > bestScore
+                      then pickBestLazy player rest newScore mv
+                      else pickBestLazy player rest bestScore bestMove
+                Nothing ->
+                  let (score, _) = whoMightWin nState maxDepth (curDepth + 1)
+                      myScore = negate score
+                  in if myScore >= 110 
+                      then (myScore, mv)
+                      else if myScore > bestScore
+                        then pickBestLazy player rest myScore mv
+                        else pickBestLazy player rest bestScore bestMove
+          Nothing -> error "chose an invalid move which shouldn't happen"

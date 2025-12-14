@@ -88,22 +88,22 @@ obeysForce Nothing  _ = True
 obeysForce (Just f) l = f == l
 
 
-makeMove :: GameState -> Move -> GameState
+makeMove :: GameState -> Move -> Maybe GameState
 makeMove state@(board, player, forced) (sbLoc, cellLoc)
-  | isJust (checkWinner state)        = (board, player, Nothing)
-  | not (inRange sbLoc)              = (board, player, Nothing)
-  | not (inRange cellLoc)            = (board, player, Nothing)
-  | not (obeysForce forced sbLoc)    = (board, player, Nothing)
+  | isJust (checkWinner state)        = Nothing
+  | not (inRange sbLoc)              = Nothing
+  | not (inRange cellLoc)            = Nothing
+  | not (obeysForce forced sbLoc)    = Nothing
   | otherwise =
       case splitAt sbLoc board of
-        (_, []) -> (board, player, Nothing)
+        (_, []) -> Nothing
         (boardsBefore, sub : boardsAfter) -> case sub of
-          Complete _ -> (board, player, Nothing)
+          Complete _ -> Nothing
           Incomplete spots -> case splitAt cellLoc spots of
-              (_, []) -> (board, player, Nothing)
+              (_, []) -> Nothing
 
               (cellsBefore, cell : cellsAfter) -> case cell of
-                Full _ -> (board, player, Nothing)
+                Full _ -> Nothing
                 Emp ->
                   let
                     -- update sub-board
@@ -120,5 +120,5 @@ makeMove state@(board, player, forced) (sbLoc, cellLoc)
                         _ -> Nothing
                   in
                     case endingState of
-                      Nothing -> (newBoard, nextPlayer player, nextForced)
-                      Just _  -> (newBoard, player, Nothing)
+                      Nothing -> Just (newBoard, nextPlayer player, nextForced)
+                      Just _  -> Just (newBoard, player, Nothing)
